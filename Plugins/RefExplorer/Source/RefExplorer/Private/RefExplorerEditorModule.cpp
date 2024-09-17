@@ -822,7 +822,15 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 			];
 	}
 
-	TArray<FString> refProps;
+	struct FRefPropInfo
+	{
+		const FString Name;
+		const FString Category;
+
+		FRefPropInfo(const FString& name, const FString& category = "") : Name(name), Category(category) {}
+	};
+
+	TArray<FRefPropInfo> refPropInfos;
 
 	if (UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(GraphNode))
 	{
@@ -834,17 +842,96 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 			{
 				if (rootAsset != refAsset)
 				{
-					if (UClass* refAssetClass = refAsset->GetClass())
+					if (UBlueprint* refBlueprint = Cast<UBlueprint>(refAsset))
+					{
+						UObject* genClassDefaultObject = refBlueprint->GeneratedClass->GetDefaultObject();
+
+						for (TFieldIterator<FObjectPropertyBase> It(refBlueprint->GeneratedClass); It; ++It)
+						{
+							if (FObjectPropertyBase* objectProperty = *It)
+							{
+								UObject* objectPropertyValue = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(genClassDefaultObject));
+
+								if (objectPropertyValue == rootAsset)
+								{
+									refPropInfos.Add(FRefPropInfo(objectProperty->GetName()));
+								}
+
+								if (UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset))
+								{
+									if (objectPropertyValue == rootBlueprint->GeneratedClass)
+									{
+										refPropInfos.Add(FRefPropInfo(objectProperty->GetName()));
+									}
+								}
+							}
+						}
+
+						if (UScriptStruct* scriptStruct = Cast<UScriptStruct>(rootAsset))
+						{
+							for (TFieldIterator<FStructProperty> It(refBlueprint->GeneratedClass); It; ++It)
+							{
+								FStructProperty* structProperty = *It;
+
+								if (structProperty->Struct == scriptStruct)
+								{
+									refPropInfos.Add(FRefPropInfo(structProperty->GetName()));
+								}
+							}
+						}
+					}
+					else if (UScriptStruct* refStruct = Cast<UScriptStruct>(refAsset))
+					{
+						for (TFieldIterator<FObjectPropertyBase> It(refStruct); It; ++It)
+						{
+							if (FObjectPropertyBase* objectProperty = *It)
+							{
+								UObject* value = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(refAsset));
+
+								if (value == rootAsset)
+								{
+									refPropInfos.Add(FRefPropInfo(objectProperty->GetName()));
+								}
+							}
+						}
+
+						if (UScriptStruct* scriptStruct = Cast<UScriptStruct>(rootAsset))
+						{
+							for (TFieldIterator<FStructProperty> It(refStruct); It; ++It)
+							{
+								FStructProperty* structProperty = *It;
+
+								if (structProperty->Struct == scriptStruct)
+								{
+									FRefPropInfo(structProperty->GetDisplayNameText().ToString());
+								}
+							}
+						}
+					}
+					else if (UClass* refAssetClass = refAsset->GetClass())
 					{
 						for (TFieldIterator<FObjectPropertyBase> It(refAssetClass); It; ++It)
 						{
 							if (FObjectPropertyBase* objectProperty = *It)
 							{
 								UObject* value = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(refAsset));
-								
+
 								if (value == rootAsset)
 								{
-									refProps.Add(objectProperty->GetName());
+									refPropInfos.Add(FRefPropInfo(objectProperty->GetName()));
+								}
+							}
+						}
+
+						if (UScriptStruct* scriptStruct = Cast<UScriptStruct>(rootAsset))
+						{
+							for (TFieldIterator<FStructProperty> It(refAssetClass); It; ++It)
+							{
+								FStructProperty* structProperty = *It;
+
+								if (structProperty->Struct == scriptStruct)
+								{
+									refPropInfos.Add(FRefPropInfo(structProperty->GetName()));
 								}
 							}
 						}
@@ -856,24 +943,24 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 
 	TSharedRef<SWidget> refPropsWidget = SNullWidget::NullWidget;
 
-	if (refProps.Num())
+	if (refPropInfos.Num())
 	{
 		bool isFirst = true;
 
 		FString refPropsList = "";
 
-		for (const FString& refProp : refProps)
-		{
-			if (!refProp.IsEmpty())
-			{
-				if (!isFirst)
-				{
-					refPropsList += ", ";
-				}
-				refPropsList += refProp;
-				isFirst = false;
-			}
-		}
+		//for (const FString& refProp : refPropInfos)
+		//{
+		//	if (!refProp.IsEmpty())
+		//	{
+		//		if (!isFirst)
+		//		{
+		//			refPropsList += ", ";
+		//		}
+		//		refPropsList += refProp;
+		//		isFirst = false;
+		//	}
+		//}
 
 		if (!refPropsList.IsEmpty())
 		{
