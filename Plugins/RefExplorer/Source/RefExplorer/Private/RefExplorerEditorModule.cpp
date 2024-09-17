@@ -766,6 +766,47 @@ void SGraphNode_RefExplorer::Construct(const FArguments& InArgs, UEdGraphNode_Re
 	UpdateGraphNode();
 }
 
+struct FRefPropInfo
+{
+	const FString Name;
+	const FString Category;
+
+	FRefPropInfo(const FString& name, const FString& category = "") : Name(name), Category(category) {}
+};
+
+void FindRecursive(UStruct* generatedClass, void* containerOwner, UObject* rootAsset, TArray<FRefPropInfo>& refPropInfos)
+{
+	for (TFieldIterator<FStructProperty> It(generatedClass); It; ++It)
+	{
+		FStructProperty* structProperty = *It;
+
+		void* structValue = structProperty->ContainerPtrToValuePtr<void>(containerOwner);
+
+		for (TFieldIterator<FObjectPropertyBase> internalIt(structProperty->Struct); internalIt; ++internalIt)
+		{
+			if (FObjectPropertyBase* objectProperty = *internalIt)
+			{
+				UObject* objectPropertyValue = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(structValue));
+
+				if (objectPropertyValue == rootAsset)
+				{
+					refPropInfos.Add(FRefPropInfo(objectProperty->GetName()));
+				}
+
+				if (UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset))
+				{
+					if (objectPropertyValue == rootBlueprint->GeneratedClass)
+					{
+						refPropInfos.Add(FRefPropInfo(objectProperty->GetName()));
+					}
+				}
+			}
+		}
+
+		FindRecursive(structProperty->Struct, structProperty, rootAsset, refPropInfos);
+	}
+}
+
 // UpdateGraphNode is similar to the base, but adds the option to hide the thumbnail */
 void SGraphNode_RefExplorer::UpdateGraphNode()
 {
@@ -807,7 +848,6 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 
 	if (AssetThumbnail.IsValid())
 	{
-
 		FAssetThumbnailConfig ThumbnailConfig;
 		ThumbnailConfig.bAllowFadeIn = RefGraphNode->UsesThumbnail();
 		ThumbnailConfig.bForceGenericThumbnail = !RefGraphNode->UsesThumbnail();
@@ -821,14 +861,6 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 				AssetThumbnail->MakeThumbnailWidget(ThumbnailConfig)
 			];
 	}
-
-	struct FRefPropInfo
-	{
-		const FString Name;
-		const FString Category;
-
-		FRefPropInfo(const FString& name, const FString& category = "") : Name(name), Category(category) {}
-	};
 
 	TArray<FRefPropInfo> refPropInfos;
 
@@ -879,6 +911,10 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 								}
 							}
 						}
+						else
+						{
+							FindRecursive(refBlueprint->GeneratedClass, genClassDefaultObject, rootAsset, refPropInfos);
+						}
 					}
 					else if (UScriptStruct* refStruct = Cast<UScriptStruct>(refAsset))
 					{
@@ -903,7 +939,7 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 
 								if (structProperty->Struct == scriptStruct)
 								{
-									FRefPropInfo(structProperty->GetDisplayNameText().ToString());
+									refPropInfos.Add(FRefPropInfo(structProperty->GetDisplayNameText().ToString()));
 								}
 							}
 						}
