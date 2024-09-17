@@ -131,22 +131,20 @@ namespace FRefExplorerEditorModule_PRIVATE
 	}
 }
 //--------------------------------------------------------------------
-// FReferenceExplorerCommands
+// FRefExplorerCommands
 //--------------------------------------------------------------------
 
-class FReferenceExplorerCommands : public TCommands<FReferenceExplorerCommands>
+class FRefExplorerCommands : public TCommands<FRefExplorerCommands>
 {
 public:
-	FReferenceExplorerCommands() : TCommands<FReferenceExplorerCommands>(
-		"ReferenceExplorerCommands", NSLOCTEXT("Contexts", "ReferenceExplorerCommands", "Reference Explorer"),
+	FRefExplorerCommands() : TCommands<FRefExplorerCommands>(
+		"RefExplorerCommands", NSLOCTEXT("Contexts", "RefExplorerCommands", "Ref Explorer"),
 		NAME_None, FAppStyle::GetAppStyleSetName())
 	{}
 
 	// TCommands<> interface
 	virtual void RegisterCommands() override
 	{
-		UI_COMMAND(ViewReferences, "Reference Viewer...", "Launches the reference viewer showing the selected assets' references", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Shift | EModifierKey::Alt, EKeys::R));
-
 		UI_COMMAND(OpenSelectedInAssetEditor, "Edit...", "Opens the selected asset in the relevant editor.", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control, EKeys::E));
 		UI_COMMAND(ZoomToFit, "Zoom to Fit", "Zoom in and center the view on the selected item", EUserInterfaceActionType::Button, FInputChord(EKeys::F));
 
@@ -157,9 +155,6 @@ public:
 		UI_COMMAND(ShowReferenceTree, "Show Reference Tree", "Shows a reference tree for the selected asset.", EUserInterfaceActionType::Button, FInputChord());
 	}
 	// End of TCommands<> interface
-
-	// Shows the reference viewer for the selected assets
-	TSharedPtr<FUICommandInfo> ViewReferences;
 
 	// Opens the selected asset in the asset editor
 	TSharedPtr<FUICommandInfo> OpenSelectedInAssetEditor;
@@ -184,13 +179,13 @@ public:
 };
 
 //--------------------------------------------------------------------
-// FReferenceExplorerConnectionDrawingPolicy
+// FRefExplorerConnectionDrawingPolicy
 //--------------------------------------------------------------------
 
-class FReferenceExplorerConnectionDrawingPolicy : public FConnectionDrawingPolicy
+class FRefExplorerConnectionDrawingPolicy : public FConnectionDrawingPolicy
 {
 public:
-	FReferenceExplorerConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
+	FRefExplorerConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
 		: FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements)
 	{}
 
@@ -211,49 +206,49 @@ public:
 };
 
 //--------------------------------------------------------------------
-// UReferenceExplorerSchema
+// URefExplorerSchema
 //--------------------------------------------------------------------
 
-UReferenceExplorerSchema::UReferenceExplorerSchema(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {}
+URefExplorerSchema::URefExplorerSchema(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {}
 
-void UReferenceExplorerSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+void URefExplorerSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
 	{
-		FToolMenuSection& Section = Menu->AddSection(TEXT("Asset"), NSLOCTEXT("ReferenceExplorerSchema", "AssetSectionLabel", "Asset"));
+		FToolMenuSection& Section = Menu->AddSection(TEXT("Asset"), NSLOCTEXT("RefExplorerSchema", "AssetSectionLabel", "Asset"));
 		Section.AddMenuEntry(FGlobalEditorCommonCommands::Get().FindInContentBrowser);
-		Section.AddMenuEntry(FReferenceExplorerCommands::Get().OpenSelectedInAssetEditor);
+		Section.AddMenuEntry(FRefExplorerCommands::Get().OpenSelectedInAssetEditor);
 	}
 
 	{
-		FToolMenuSection& Section = Menu->AddSection(TEXT("Misc"), NSLOCTEXT("ReferenceExplorerSchema", "MiscSectionLabel", "Misc"));
-		Section.AddMenuEntry(FReferenceExplorerCommands::Get().ZoomToFit);
+		FToolMenuSection& Section = Menu->AddSection(TEXT("Misc"), NSLOCTEXT("RefExplorerSchema", "MiscSectionLabel", "Misc"));
+		Section.AddMenuEntry(FRefExplorerCommands::Get().ZoomToFit);
 	}
 
 	{
-		FToolMenuSection& Section = Menu->AddSection(TEXT("References"), NSLOCTEXT("ReferenceExplorerSchema", "ReferencesSectionLabel", "References"));
-		Section.AddMenuEntry(FReferenceExplorerCommands::Get().CopyReferencedObjects);
-		Section.AddMenuEntry(FReferenceExplorerCommands::Get().CopyReferencingObjects);
-		Section.AddMenuEntry(FReferenceExplorerCommands::Get().ShowReferencedObjects);
-		Section.AddMenuEntry(FReferenceExplorerCommands::Get().ShowReferencingObjects);
-		Section.AddMenuEntry(FReferenceExplorerCommands::Get().ShowReferenceTree);
+		FToolMenuSection& Section = Menu->AddSection(TEXT("References"), NSLOCTEXT("RefExplorerSchema", "ReferencesSectionLabel", "References"));
+		Section.AddMenuEntry(FRefExplorerCommands::Get().CopyReferencedObjects);
+		Section.AddMenuEntry(FRefExplorerCommands::Get().CopyReferencingObjects);
+		Section.AddMenuEntry(FRefExplorerCommands::Get().ShowReferencedObjects);
+		Section.AddMenuEntry(FRefExplorerCommands::Get().ShowReferencingObjects);
+		Section.AddMenuEntry(FRefExplorerCommands::Get().ShowReferenceTree);
 	}
 }
 
-FLinearColor UReferenceExplorerSchema::GetPinTypeColor(const FEdGraphPinType& PinType) const
+FLinearColor URefExplorerSchema::GetPinTypeColor(const FEdGraphPinType& PinType) const
 {
 	return FRefExplorerEditorModule_PRIVATE::GetColor(FRefExplorerEditorModule_PRIVATE::ParseDependencyPinCategory(PinType.PinCategory));
 }
 
-FConnectionDrawingPolicy* UReferenceExplorerSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const
+FConnectionDrawingPolicy* URefExplorerSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const
 {
-	return new FReferenceExplorerConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements);
+	return new FRefExplorerConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements);
 }
 
 //--------------------------------------------------------------------
-// UEdGraphNode_ReferenceExplorer
+// UEdGraphNode_RefExplorer
 //--------------------------------------------------------------------
 
-UEdGraphNode_ReferenceExplorer::UEdGraphNode_ReferenceExplorer(const FObjectInitializer& ObjectInitializer) :Super(ObjectInitializer)
+UEdGraphNode_RefExplorer::UEdGraphNode_RefExplorer(const FObjectInitializer& ObjectInitializer) :Super(ObjectInitializer)
 {
 	bUsesThumbnail = false;
 	bIsPackage = false;
@@ -265,7 +260,7 @@ UEdGraphNode_ReferenceExplorer::UEdGraphNode_ReferenceExplorer(const FObjectInit
 	ReferencerPin = NULL;
 }
 
-void UEdGraphNode_ReferenceExplorer::SetupReferenceNode(const FIntPoint& NodeLoc, const FAssetIdentifier& NewIdentifier, const FAssetData& InAssetData)
+void UEdGraphNode_RefExplorer::SetupRefExplorerNode(const FIntPoint& NodeLoc, const FAssetIdentifier& NewIdentifier, const FAssetData& InAssetData)
 {
 	NodePosX = NodeLoc.X;
 	NodePosY = NodeLoc.Y;
@@ -366,7 +361,7 @@ void UEdGraphNode_ReferenceExplorer::SetupReferenceNode(const FIntPoint& NodeLoc
 	AllocateDefaultPins();
 }
 
-void UEdGraphNode_ReferenceExplorer::AddReferencer(UEdGraphNode_ReferenceExplorer* ReferencerNode)
+void UEdGraphNode_RefExplorer::AddReferencer(UEdGraphNode_RefExplorer* ReferencerNode)
 {
 	UEdGraphPin* ReferencerDependencyPin = ReferencerNode->GetDependencyPin();
 
@@ -378,9 +373,9 @@ void UEdGraphNode_ReferenceExplorer::AddReferencer(UEdGraphNode_ReferenceExplore
 	}
 }
 
-UEdGraph_ReferenceExplorer* UEdGraphNode_ReferenceExplorer::GetReferenceViewerGraph() const { return Cast<UEdGraph_ReferenceExplorer>(GetGraph()); }
+UEdGraph_RefExplorer* UEdGraphNode_RefExplorer::GetRefExplorerGraph() const { return Cast<UEdGraph_RefExplorer>(GetGraph()); }
 
-FLinearColor UEdGraphNode_ReferenceExplorer::GetNodeTitleColor() const
+FLinearColor UEdGraphNode_RefExplorer::GetNodeTitleColor() const
 {
 	if (bIsPrimaryAsset)
 	{
@@ -396,9 +391,9 @@ FLinearColor UEdGraphNode_ReferenceExplorer::GetNodeTitleColor() const
 	}
 }
 
-FText UEdGraphNode_ReferenceExplorer::GetTooltipText() const { return FText::FromString(Identifier.ToString()); }
+FText UEdGraphNode_RefExplorer::GetTooltipText() const { return FText::FromString(Identifier.ToString()); }
 
-void UEdGraphNode_ReferenceExplorer::AllocateDefaultPins()
+void UEdGraphNode_RefExplorer::AllocateDefaultPins()
 {
 	FName PassiveName = FRefExplorerEditorModule_PRIVATE::GetName(FRefExplorerEditorModule_PRIVATE::EDependencyPinCategory::LinkEndPassive);
 
@@ -412,10 +407,10 @@ void UEdGraphNode_ReferenceExplorer::AllocateDefaultPins()
 }
 
 //--------------------------------------------------------------------
-// UEdGraph_ReferenceExplorer
+// UEdGraph_RefExplorer
 //--------------------------------------------------------------------
 
-UEdGraph_ReferenceExplorer::UEdGraph_ReferenceExplorer(const FObjectInitializer& ObjectInitializer)
+UEdGraph_RefExplorer::UEdGraph_RefExplorer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	if (!IsTemplate())
@@ -424,53 +419,53 @@ UEdGraph_ReferenceExplorer::UEdGraph_ReferenceExplorer(const FObjectInitializer&
 	}
 }
 
-void UEdGraph_ReferenceExplorer::BeginDestroy()
+void UEdGraph_RefExplorer::BeginDestroy()
 {
 	AssetThumbnailPool.Reset();
 
 	Super::BeginDestroy();
 }
 
-void UEdGraph_ReferenceExplorer::SetGraphRoot(const FAssetIdentifier& GraphRootIdentifier, const FIntPoint& GraphRootOrigin)
+void UEdGraph_RefExplorer::SetGraphRoot(const FAssetIdentifier& GraphRootIdentifier, const FIntPoint& GraphRootOrigin)
 {
 	CurrentGraphRootIdentifier = GraphRootIdentifier;
 	CurrentGraphRootOrigin = GraphRootOrigin;
 	UAssetManager::Get().UpdateManagementDatabase();
 }
 
-UEdGraphNode_ReferenceExplorer* UEdGraph_ReferenceExplorer::RebuildGraph()
+UEdGraphNode_RefExplorer* UEdGraph_RefExplorer::RebuildGraph()
 {
 	RemoveAllNodes();
 
-	ReferencerNodeInfos.Reset();
+	RefExplorerNodeInfos.Reset();
 	;
-	ReferencerNodeInfos.FindOrAdd(CurrentGraphRootIdentifier, FReferenceExplorerNodeInfo(CurrentGraphRootIdentifier));
+	RefExplorerNodeInfos.FindOrAdd(CurrentGraphRootIdentifier, FRefExplorerNodeInfo(CurrentGraphRootIdentifier));
 
 	TMap<FAssetIdentifier, FRefExplorerEditorModule_PRIVATE::EDependencyPinCategory> ReferenceLinks;
 	GetSortedLinks(CurrentGraphRootIdentifier, ReferenceLinks);
 
-	ReferencerNodeInfos[CurrentGraphRootIdentifier].Children.Reserve(ReferenceLinks.Num());
+	RefExplorerNodeInfos[CurrentGraphRootIdentifier].Children.Reserve(ReferenceLinks.Num());
 
 	for (const TPair<FAssetIdentifier, FRefExplorerEditorModule_PRIVATE::EDependencyPinCategory>& Pair : ReferenceLinks)
 	{
 		const FAssetIdentifier ChildId = Pair.Key;
 
-		if (!ReferencerNodeInfos.Contains(ChildId))
+		if (!RefExplorerNodeInfos.Contains(ChildId))
 		{
-			FReferenceExplorerNodeInfo& NewNodeInfo = ReferencerNodeInfos.FindOrAdd(ChildId, FReferenceExplorerNodeInfo(ChildId));
-			ReferencerNodeInfos[ChildId].Parents.FindOrAdd(CurrentGraphRootIdentifier);
-			ReferencerNodeInfos[CurrentGraphRootIdentifier].Children.Emplace(Pair);
+			FRefExplorerNodeInfo& NewNodeInfo = RefExplorerNodeInfos.FindOrAdd(ChildId, FRefExplorerNodeInfo(ChildId));
+			RefExplorerNodeInfos[ChildId].Parents.FindOrAdd(CurrentGraphRootIdentifier);
+			RefExplorerNodeInfos[CurrentGraphRootIdentifier].Children.Emplace(Pair);
 		}
-		else if (!ReferencerNodeInfos[ChildId].Parents.Contains(CurrentGraphRootIdentifier))
+		else if (!RefExplorerNodeInfos[ChildId].Parents.Contains(CurrentGraphRootIdentifier))
 		{
-			ReferencerNodeInfos[ChildId].Parents.FindOrAdd(CurrentGraphRootIdentifier);
-			ReferencerNodeInfos[CurrentGraphRootIdentifier].Children.Emplace(Pair);
+			RefExplorerNodeInfos[ChildId].Parents.FindOrAdd(CurrentGraphRootIdentifier);
+			RefExplorerNodeInfos[CurrentGraphRootIdentifier].Children.Emplace(Pair);
 		}
 	}
 
 	TSet<FName> AllPackageNames;
 
-	for (TPair<FAssetIdentifier, FReferenceExplorerNodeInfo>& InfoPair : ReferencerNodeInfos)
+	for (TPair<FAssetIdentifier, FRefExplorerNodeInfo>& InfoPair : RefExplorerNodeInfos)
 	{
 		if (!InfoPair.Key.IsValue() && !InfoPair.Key.PackageName.IsNone())
 		{
@@ -482,7 +477,7 @@ UEdGraphNode_ReferenceExplorer* UEdGraph_ReferenceExplorer::RebuildGraph()
 	UE::AssetRegistry::GetAssetForPackages(AllPackageNames.Array(), PackagesToAssetDataMap);
 
 	TSet<FTopLevelAssetPath> AllClasses;
-	for (TPair<FAssetIdentifier, FReferenceExplorerNodeInfo>& InfoPair : ReferencerNodeInfos)
+	for (TPair<FAssetIdentifier, FRefExplorerNodeInfo>& InfoPair : RefExplorerNodeInfos)
 	{
 		InfoPair.Value.AssetData = PackagesToAssetDataMap.FindRef(InfoPair.Key.PackageName);
 		if (InfoPair.Value.AssetData.IsValid())
@@ -491,16 +486,16 @@ UEdGraphNode_ReferenceExplorer* UEdGraph_ReferenceExplorer::RebuildGraph()
 		}
 	}
 
-	UEdGraphNode_ReferenceExplorer* RootNode = nullptr;
+	UEdGraphNode_RefExplorer* RootNode = nullptr;
 
-	if (!ReferencerNodeInfos.IsEmpty())
+	if (!RefExplorerNodeInfos.IsEmpty())
 	{
-		const FReferenceExplorerNodeInfo& NodeInfo = ReferencerNodeInfos[CurrentGraphRootIdentifier];
-		RootNode = Cast<UEdGraphNode_ReferenceExplorer>(CreateNode(UEdGraphNode_ReferenceExplorer::StaticClass(), false));
-		RootNode->SetupReferenceNode(CurrentGraphRootOrigin, CurrentGraphRootIdentifier, NodeInfo.AssetData);
+		const FRefExplorerNodeInfo& NodeInfo = RefExplorerNodeInfos[CurrentGraphRootIdentifier];
+		RootNode = Cast<UEdGraphNode_RefExplorer>(CreateNode(UEdGraphNode_RefExplorer::StaticClass(), false));
+		RootNode->SetupRefExplorerNode(CurrentGraphRootOrigin, CurrentGraphRootIdentifier, NodeInfo.AssetData);
 
 		// References
-		RecursivelyCreateNodes(CurrentGraphRootIdentifier, CurrentGraphRootOrigin, CurrentGraphRootIdentifier, RootNode, ReferencerNodeInfos, /*bIsRoot*/ true);
+		RecursivelyCreateNodes(CurrentGraphRootIdentifier, CurrentGraphRootOrigin, CurrentGraphRootIdentifier, RootNode, RefExplorerNodeInfos, /*bIsRoot*/ true);
 	}
 
 	NotifyGraphChanged();
@@ -508,7 +503,7 @@ UEdGraphNode_ReferenceExplorer* UEdGraph_ReferenceExplorer::RebuildGraph()
 	return RootNode;
 }
 
-void UEdGraph_ReferenceExplorer::GetSortedLinks(const FAssetIdentifier& GraphRootIdentifier, TMap<FAssetIdentifier, FRefExplorerEditorModule_PRIVATE::EDependencyPinCategory>& OutLinks) const
+void UEdGraph_RefExplorer::GetSortedLinks(const FAssetIdentifier& GraphRootIdentifier, TMap<FAssetIdentifier, FRefExplorerEditorModule_PRIVATE::EDependencyPinCategory>& OutLinks) const
 {
 	using namespace UE::AssetRegistry;
 	auto CategoryOrder = [](EDependencyCategory InCategory)
@@ -637,11 +632,11 @@ void UEdGraph_ReferenceExplorer::GetSortedLinks(const FAssetIdentifier& GraphRoo
 	}
 }
 
-void UEdGraph_ReferenceExplorer::GatherAssetData(TMap<FAssetIdentifier, FReferenceExplorerNodeInfo>& InNodeInfos)
+void UEdGraph_RefExplorer::GatherAssetData(TMap<FAssetIdentifier, FRefExplorerNodeInfo>& InNodeInfos)
 {
 	// Grab the list of packages
 	TSet<FName> PackageNames;
-	for (TPair<FAssetIdentifier, FReferenceExplorerNodeInfo>& InfoPair : InNodeInfos)
+	for (TPair<FAssetIdentifier, FRefExplorerNodeInfo>& InfoPair : InNodeInfos)
 	{
 		FAssetIdentifier& AssetId = InfoPair.Key;
 		if (!AssetId.IsValue() && !AssetId.PackageName.IsNone())
@@ -656,19 +651,19 @@ void UEdGraph_ReferenceExplorer::GatherAssetData(TMap<FAssetIdentifier, FReferen
 
 
 	// Populate the AssetData back into the NodeInfos
-	for (TPair<FAssetIdentifier, FReferenceExplorerNodeInfo>& InfoPair : InNodeInfos)
+	for (TPair<FAssetIdentifier, FRefExplorerNodeInfo>& InfoPair : InNodeInfos)
 	{
 		InfoPair.Value.AssetData = PackagesToAssetDataMap.FindRef(InfoPair.Key.PackageName);
 	}
 }
 
-UEdGraphNode_ReferenceExplorer* UEdGraph_ReferenceExplorer::RecursivelyCreateNodes(const FAssetIdentifier& InAssetId, const FIntPoint& InNodeLoc, const FAssetIdentifier& InParentId, UEdGraphNode_ReferenceExplorer* InParentNode, TMap<FAssetIdentifier, FReferenceExplorerNodeInfo>& InNodeInfos, bool bIsRoot)
+UEdGraphNode_RefExplorer* UEdGraph_RefExplorer::RecursivelyCreateNodes(const FAssetIdentifier& InAssetId, const FIntPoint& InNodeLoc, const FAssetIdentifier& InParentId, UEdGraphNode_RefExplorer* InParentNode, TMap<FAssetIdentifier, FRefExplorerNodeInfo>& InNodeInfos, bool bIsRoot)
 {
 	check(InNodeInfos.Contains(InAssetId));
 
-	const FReferenceExplorerNodeInfo& NodeInfo = InNodeInfos[InAssetId];
+	const FRefExplorerNodeInfo& NodeInfo = InNodeInfos[InAssetId];
 
-	UEdGraphNode_ReferenceExplorer* NewNode = nullptr;
+	UEdGraphNode_RefExplorer* NewNode = nullptr;
 	
 	if (bIsRoot)
 	{
@@ -676,8 +671,8 @@ UEdGraphNode_ReferenceExplorer* UEdGraph_ReferenceExplorer::RecursivelyCreateNod
 	}
 	else
 	{
-		NewNode = Cast<UEdGraphNode_ReferenceExplorer>(CreateNode(UEdGraphNode_ReferenceExplorer::StaticClass(), false));
-		NewNode->SetupReferenceNode(InNodeLoc, { InAssetId }, NodeInfo.AssetData);
+		NewNode = Cast<UEdGraphNode_RefExplorer>(CreateNode(UEdGraphNode_RefExplorer::StaticClass(), false));
+		NewNode->SetupRefExplorerNode(InNodeLoc, { InAssetId }, NodeInfo.AssetData);
 	}
 
 	FIntPoint ChildLoc = InNodeLoc;
@@ -703,7 +698,7 @@ UEdGraphNode_ReferenceExplorer* UEdGraph_ReferenceExplorer::RecursivelyCreateNod
 			ChildLoc.X = InNodeLoc.X + Radius * FMath::Cos(AccumAngle + (UE_PI - LastAngle / 2));
 			ChildLoc.Y = InNodeLoc.Y - Radius * FMath::Sin(AccumAngle + (UE_PI - LastAngle / 2));
 
-			UEdGraphNode_ReferenceExplorer* ChildNode = RecursivelyCreateNodes(ChildId, ChildLoc, InAssetId, NewNode, InNodeInfos);
+			UEdGraphNode_RefExplorer* ChildNode = RecursivelyCreateNodes(ChildId, ChildLoc, InAssetId, NewNode, InNodeInfos);
 
 			ChildNode->GetDependencyPin()->PinType.PinCategory = FRefExplorerEditorModule_PRIVATE::GetName(Pair.Value);
 			NewNode->AddReferencer(ChildNode);
@@ -713,12 +708,12 @@ UEdGraphNode_ReferenceExplorer* UEdGraph_ReferenceExplorer::RecursivelyCreateNod
 	return NewNode;
 }
 
-const TSharedPtr<FAssetThumbnailPool>& UEdGraph_ReferenceExplorer::GetAssetThumbnailPool() const
+const TSharedPtr<FAssetThumbnailPool>& UEdGraph_RefExplorer::GetAssetThumbnailPool() const
 {
 	return AssetThumbnailPool;
 }
 
-void UEdGraph_ReferenceExplorer::RemoveAllNodes()
+void UEdGraph_RefExplorer::RemoveAllNodes()
 {
 	TArray<UEdGraphNode*> NodesToRemove = Nodes;
 	for (int32 NodeIndex = 0; NodeIndex < NodesToRemove.Num(); ++NodeIndex)
@@ -728,18 +723,18 @@ void UEdGraph_ReferenceExplorer::RemoveAllNodes()
 }
 
 //------------------------------------------------------
-// SGraphNode_ReferenceExplorer
+// SGraphNode_RefExplorer
 //------------------------------------------------------
 
-class SGraphNode_ReferenceExplorer : public SGraphNode
+class SGraphNode_RefExplorer : public SGraphNode
 {
 public:
-	SLATE_BEGIN_ARGS(SGraphNode_ReferenceExplorer) {}
+	SLATE_BEGIN_ARGS(SGraphNode_RefExplorer) {}
 
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs, UEdGraphNode_ReferenceExplorer* InNode);
+	void Construct(const FArguments& InArgs, UEdGraphNode_RefExplorer* InNode);
 
 	// SGraphNode implementation
 	virtual void UpdateGraphNode() override;
@@ -750,14 +745,14 @@ private:
 	TSharedPtr<class FAssetThumbnail> AssetThumbnail;
 };
 
-void SGraphNode_ReferenceExplorer::Construct(const FArguments& InArgs, UEdGraphNode_ReferenceExplorer* InNode)
+void SGraphNode_RefExplorer::Construct(const FArguments& InArgs, UEdGraphNode_RefExplorer* InNode)
 {
 	const int32 ThumbnailSize = 128;
 
 	if (InNode->UsesThumbnail())
 	{
 		// Create a thumbnail from the graph's thumbnail pool
-		TSharedPtr<FAssetThumbnailPool> AssetThumbnailPool = InNode->GetReferenceViewerGraph()->GetAssetThumbnailPool();
+		TSharedPtr<FAssetThumbnailPool> AssetThumbnailPool = InNode->GetRefExplorerGraph()->GetAssetThumbnailPool();
 		AssetThumbnail = MakeShareable(new FAssetThumbnail(InNode->GetAssetData(), ThumbnailSize, ThumbnailSize, AssetThumbnailPool));
 	}
 	else if (InNode->IsPackage())
@@ -772,7 +767,7 @@ void SGraphNode_ReferenceExplorer::Construct(const FArguments& InArgs, UEdGraphN
 }
 
 // UpdateGraphNode is similar to the base, but adds the option to hide the thumbnail */
-void SGraphNode_ReferenceExplorer::UpdateGraphNode()
+void SGraphNode_RefExplorer::UpdateGraphNode()
 {
 	OutputPins.Empty();
 
@@ -806,7 +801,7 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 	}
 
 	TSharedRef<SWidget> ThumbnailWidget = SNullWidget::NullWidget;
-	UEdGraphNode_ReferenceExplorer* RefGraphNode = CastChecked<UEdGraphNode_ReferenceExplorer>(GraphNode);
+	UEdGraphNode_RefExplorer* RefGraphNode = CastChecked<UEdGraphNode_RefExplorer>(GraphNode);
 
 	FLinearColor OpacityColor = FLinearColor::White;
 
@@ -827,28 +822,29 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 			];
 	}
 
-	TArray<FString> referencerProperties;
+	TArray<FString> refProps;
 
-	if (UEdGraphNode_ReferenceExplorer* referenceExplorerNode = Cast<UEdGraphNode_ReferenceExplorer>(GraphNode))
+	if (UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(GraphNode))
 	{
-		UEdGraph_ReferenceExplorer* referenceExplorerGraph = referenceExplorerNode->GetReferenceViewerGraph();
+		UEdGraph_RefExplorer* RefExplorerGraph = RefExplorerNode->GetRefExplorerGraph();
 
-		if (UObject* rootAsset = referenceExplorerGraph->GetGraphRootNodeInfo().AssetData.GetAsset())
+		if (UObject* rootAsset = RefExplorerGraph->GetGraphRootNodeInfo().AssetData.GetAsset())
 		{
-			if (UObject* referencerAsset = referenceExplorerNode->GetAssetData().GetAsset())
+			if (UObject* refAsset = RefExplorerNode->GetAssetData().GetAsset())
 			{
-				if (rootAsset != referencerAsset)
+				if (rootAsset != refAsset)
 				{
-					if (UClass* referencerAssetClass = referencerAsset->GetClass())
+					if (UClass* refAssetClass = refAsset->GetClass())
 					{
-						for (TFieldIterator<FObjectPropertyBase> It(referencerAssetClass); It; ++It)
+						for (TFieldIterator<FObjectPropertyBase> It(refAssetClass); It; ++It)
 						{
 							if (FObjectPropertyBase* objectProperty = *It)
 							{
-								UObject* value = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(referencerAsset));
+								UObject* value = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(refAsset));
+								
 								if (value == rootAsset)
 								{
-									referencerProperties.Add(objectProperty->GetName());
+									refProps.Add(objectProperty->GetName());
 								}
 							}
 						}
@@ -858,34 +854,34 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 		}
 	}
 
-	TSharedRef<SWidget> referencerPropertiesWidget = SNullWidget::NullWidget;
+	TSharedRef<SWidget> refPropsWidget = SNullWidget::NullWidget;
 
-	if (referencerProperties.Num())
+	if (refProps.Num())
 	{
 		bool isFirst = true;
 
-		FString referencerPropertiesList = "";
+		FString refPropsList = "";
 
-		for (const FString& referencerProperty : referencerProperties)
+		for (const FString& refProp : refProps)
 		{
-			if (!referencerProperty.IsEmpty())
+			if (!refProp.IsEmpty())
 			{
 				if (!isFirst)
 				{
-					referencerPropertiesList += ", ";
+					refPropsList += ", ";
 				}
-				referencerPropertiesList += referencerProperty;
+				refPropsList += refProp;
 				isFirst = false;
 			}
 		}
 
-		if (!referencerPropertiesList.IsEmpty())
+		if (!refPropsList.IsEmpty())
 		{
-			referencerPropertiesWidget = SNew(STextBlock).Text(FText::FromString(referencerPropertiesList)).AutoWrapText(true);
+			refPropsWidget = SNew(STextBlock).Text(FText::FromString(refPropsList)).AutoWrapText(true);
 		}
 	}
 
-	ContentScale.Bind(this, &SGraphNode_ReferenceExplorer::GetContentScale);
+	ContentScale.Bind(this, &SGraphNode_RefExplorer::GetContentScale);
 	GetOrAddSlot(ENodeZone::Center)
 		.HAlign(HAlign_Center)
 		.VAlign(VAlign_Center)
@@ -900,11 +896,11 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 						.Padding(0)
 						[
 							SNew(SBorder) // Outline
-								.BorderBackgroundColor(this, &SGraphNode_ReferenceExplorer::GetNodeTitleColor)
+								.BorderBackgroundColor(this, &SGraphNode_RefExplorer::GetNodeTitleColor)
 								.Padding(0)
 								[
 									SNew(SVerticalBox)
-										.ToolTipText(this, &SGraphNode_ReferenceExplorer::GetNodeTooltip)
+										.ToolTipText(this, &SGraphNode_RefExplorer::GetNodeTooltip)
 
 										+ SVerticalBox::Slot()
 										.AutoHeight()
@@ -915,7 +911,7 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 											SNew(SBorder)
 												.Padding(FMargin(10.0f, 4.0f, 6.0f, 4.0f))
 												.BorderImage(FRefExplorerEditorModule::GetStyleSet()->GetBrush("Graph.Node.ColorSpill"))
-												.BorderBackgroundColor(this, &SGraphNode_ReferenceExplorer::GetNodeTitleColor)
+												.BorderBackgroundColor(this, &SGraphNode_RefExplorer::GetNodeTitleColor)
 												[
 													SNew(SHorizontalBox)
 														+ SHorizontalBox::Slot()
@@ -940,10 +936,10 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 																[
 																	SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 																		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-																		.OnVerifyTextChanged(this, &SGraphNode_ReferenceExplorer::OnVerifyNameTextChanged)
-																		.OnTextCommitted(this, &SGraphNode_ReferenceExplorer::OnNameTextCommited)
-																		.IsReadOnly(this, &SGraphNode_ReferenceExplorer::IsNameReadOnly)
-																		.IsSelected(this, &SGraphNode_ReferenceExplorer::IsSelectedExclusively)
+																		.OnVerifyTextChanged(this, &SGraphNode_RefExplorer::OnVerifyNameTextChanged)
+																		.OnTextCommitted(this, &SGraphNode_RefExplorer::OnNameTextCommited)
+																		.IsReadOnly(this, &SGraphNode_RefExplorer::IsNameReadOnly)
+																		.IsSelected(this, &SGraphNode_RefExplorer::IsSelectedExclusively)
 																]
 																+ SVerticalBox::Slot()
 																.AutoHeight()
@@ -960,8 +956,8 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 										[
 											// POPUP ERROR MESSAGE
 											SAssignNew(ErrorText, SErrorText)
-												.BackgroundColor(this, &SGraphNode_ReferenceExplorer::GetErrorColor)
-												.ToolTipText(this, &SGraphNode_ReferenceExplorer::GetErrorMsgToolTip)
+												.BackgroundColor(this, &SGraphNode_RefExplorer::GetErrorColor)
+												.ToolTipText(this, &SGraphNode_RefExplorer::GetErrorMsgToolTip)
 										]
 										+ SVerticalBox::Slot()
 										.AutoHeight()
@@ -1003,7 +999,7 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 
 																+SVerticalBox::Slot().AutoHeight()
 																[
-																	referencerPropertiesWidget
+																	refPropsWidget
 																]
 														]
 
@@ -1053,21 +1049,21 @@ void SGraphNode_ReferenceExplorer::UpdateGraphNode()
 }
 
 //------------------------------------------------------
-// FReferenceExplorerGraphNodeFactory
+// FRefExplorerGraphNodeFactory
 //------------------------------------------------------
 
-TSharedPtr<SGraphNode> FReferenceExplorerGraphNodeFactory::CreateNode(UEdGraphNode* InNode) const
+TSharedPtr<SGraphNode> FRefExplorerGraphNodeFactory::CreateNode(UEdGraphNode* InNode) const
 {
-	if (UEdGraphNode_ReferenceExplorer* referenceExplorerNode = Cast<UEdGraphNode_ReferenceExplorer>(InNode))
+	if (UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(InNode))
 	{
-		return SNew(SGraphNode_ReferenceExplorer, referenceExplorerNode);
+		return SNew(SGraphNode_RefExplorer, RefExplorerNode);
 	}
 
 	return nullptr;
 }
 
 //--------------------------------------------------------------------
-// SReferenceExplorer
+// SRefExplorer
 //--------------------------------------------------------------------
 
 bool IsAssetIdentifierPassingSearchTextFilter(const FAssetIdentifier& InNode, const TArray<FString>& InSearchWords)
@@ -1084,7 +1080,7 @@ bool IsAssetIdentifierPassingSearchTextFilter(const FAssetIdentifier& InNode, co
 	return true;
 }
 
-SReferenceExplorer::~SReferenceExplorer()
+SRefExplorer::~SRefExplorer()
 {
 	if (!GExitPurge)
 	{
@@ -1095,24 +1091,24 @@ SReferenceExplorer::~SReferenceExplorer()
 	}
 }
 
-void SReferenceExplorer::Construct(const FArguments& InArgs)
+void SRefExplorer::Construct(const FArguments& InArgs)
 {
 	// Create an action list and register commands
 	RegisterActions();
 
 	// Create the graph
-	GraphObj = NewObject<UEdGraph_ReferenceExplorer>();
-	GraphObj->Schema = UReferenceExplorerSchema::StaticClass();
+	GraphObj = NewObject<UEdGraph_RefExplorer>();
+	GraphObj->Schema = URefExplorerSchema::StaticClass();
 	GraphObj->AddToRoot();
-	GraphObj->SetReferenceViewer(StaticCastSharedRef<SReferenceExplorer>(AsShared()));
+	GraphObj->SetRefExplorer(StaticCastSharedRef<SRefExplorer>(AsShared()));
 
 	SGraphEditor::FGraphEditorEvents GraphEvents;
-	GraphEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &SReferenceExplorer::OnNodeDoubleClicked);
-	GraphEvents.OnCreateActionMenu = SGraphEditor::FOnCreateActionMenu::CreateSP(this, &SReferenceExplorer::OnCreateGraphActionMenu);
+	GraphEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &SRefExplorer::OnNodeDoubleClicked);
+	GraphEvents.OnCreateActionMenu = SGraphEditor::FOnCreateActionMenu::CreateSP(this, &SRefExplorer::OnCreateGraphActionMenu);
 
 	// Create the graph editor
 	GraphEditorPtr = SNew(SGraphEditor)
-		.AdditionalCommands(ReferenceViewerActions)
+		.AdditionalCommands(RefExplorerActions)
 		.GraphToEdit(GraphObj)
 		.GraphEvents(GraphEvents)
 		.ShowGraphStateOverlay(false);
@@ -1120,7 +1116,7 @@ void SReferenceExplorer::Construct(const FArguments& InArgs)
 	FEditorWidgetsModule& EditorWidgetsModule = FModuleManager::LoadModuleChecked<FEditorWidgetsModule>("EditorWidgets");
 	TSharedRef<SWidget> AssetDiscoveryIndicator = EditorWidgetsModule.CreateAssetDiscoveryIndicator(EAssetDiscoveryIndicatorScaleMode::Scale_None, FMargin(16, 8), false);
 
-	const FReferenceExplorerCommands& UICommands = FReferenceExplorerCommands::Get();
+	const FRefExplorerCommands& UICommands = FRefExplorerCommands::Get();
 
 	static const FName DefaultForegroundName("DefaultForeground");
 
@@ -1154,7 +1150,7 @@ void SReferenceExplorer::Construct(const FArguments& InArgs)
 								.VAlign(VAlign_Fill)
 								[
 									SAssignNew(FindPathAssetPicker, SComboButton)
-										.OnGetMenuContent(this, &SReferenceExplorer::GenerateFindPathAssetPickerMenu)
+										.OnGetMenuContent(this, &SRefExplorer::GenerateFindPathAssetPickerMenu)
 										.ButtonContent()
 										[
 											SNew(STextBlock)
@@ -1200,7 +1196,7 @@ void SReferenceExplorer::Construct(const FArguments& InArgs)
 						.Padding(FMargin(0, 0, 0, 16))
 						[
 							SNew(STextBlock)
-								.Text(this, &SReferenceExplorer::GetStatusText)
+								.Text(this, &SRefExplorer::GetStatusText)
 						]
 				]
 		];
@@ -1208,22 +1204,22 @@ void SReferenceExplorer::Construct(const FArguments& InArgs)
 		SetCanTick(true);
 }
 
-FReply SReferenceExplorer::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
+FReply SRefExplorer::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
 {
-	return ReferenceViewerActions->ProcessCommandBindings(InKeyEvent) ? FReply::Handled() : FReply::Unhandled();
+	return RefExplorerActions->ProcessCommandBindings(InKeyEvent) ? FReply::Handled() : FReply::Unhandled();
 }
 
-void SReferenceExplorer::SetGraphRootIdentifier(const FAssetIdentifier& NewGraphRootIdentifier, const FReferenceViewerParams& ReferenceViewerParams)
+void SRefExplorer::SetGraphRootIdentifier(const FAssetIdentifier& NewGraphRootIdentifier, const FReferenceViewerParams& ReferenceViewerParams)
 {
 	GraphObj->SetGraphRoot(NewGraphRootIdentifier);
 	RebuildGraph();
 
 	// Zoom once this frame to make sure widgets are visible, then zoom again so size is correct
 	TriggerZoomToFit(0, 0);
-	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SReferenceExplorer::TriggerZoomToFit));
+	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 }
 
-EActiveTimerReturnType SReferenceExplorer::TriggerZoomToFit(double InCurrentTime, float InDeltaTime)
+EActiveTimerReturnType SRefExplorer::TriggerZoomToFit(double InCurrentTime, float InDeltaTime)
 {
 	if (GraphEditorPtr.IsValid())
 	{
@@ -1232,7 +1228,7 @@ EActiveTimerReturnType SReferenceExplorer::TriggerZoomToFit(double InCurrentTime
 	return EActiveTimerReturnType::Stop;
 }
 
-void SReferenceExplorer::RebuildGraph()
+void SRefExplorer::RebuildGraph()
 {
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 	if (AssetRegistryModule.Get().IsLoadingAssets())
@@ -1240,7 +1236,7 @@ void SReferenceExplorer::RebuildGraph()
 		// We are still discovering assets, listen for the completion delegate before building the graph
 		if (!AssetRegistryModule.Get().OnFilesLoaded().IsBoundToObject(this))
 		{
-			AssetRegistryModule.Get().OnFilesLoaded().AddSP(this, &SReferenceExplorer::OnInitialAssetRegistrySearchComplete);
+			AssetRegistryModule.Get().OnFilesLoaded().AddSP(this, &SRefExplorer::OnInitialAssetRegistrySearchComplete);
 		}
 	}
 	else
@@ -1255,42 +1251,42 @@ void SReferenceExplorer::RebuildGraph()
 		if (!AssetRefreshHandle.IsValid())
 		{
 			// Listen for updates
-			AssetRefreshHandle = AssetRegistryModule.Get().OnAssetUpdated().AddSP(this, &SReferenceExplorer::OnAssetRegistryChanged);
-			AssetRegistryModule.Get().OnAssetAdded().AddSP(this, &SReferenceExplorer::OnAssetRegistryChanged);
-			AssetRegistryModule.Get().OnAssetRemoved().AddSP(this, &SReferenceExplorer::OnAssetRegistryChanged);
+			AssetRefreshHandle = AssetRegistryModule.Get().OnAssetUpdated().AddSP(this, &SRefExplorer::OnAssetRegistryChanged);
+			AssetRegistryModule.Get().OnAssetAdded().AddSP(this, &SRefExplorer::OnAssetRegistryChanged);
+			AssetRegistryModule.Get().OnAssetRemoved().AddSP(this, &SRefExplorer::OnAssetRegistryChanged);
 		}
 	}
 }
 
-void SReferenceExplorer::OnNodeDoubleClicked(UEdGraphNode* Node)
+void SRefExplorer::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
 	if (GraphObj)
 	{
-		if (UEdGraphNode_ReferenceExplorer* referenceExplorerNode = Cast<UEdGraphNode_ReferenceExplorer>(Node))
+		if (UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(Node))
 		{
-			GraphObj->SetGraphRoot(referenceExplorerNode->GetIdentifier());
+			GraphObj->SetGraphRoot(RefExplorerNode->GetIdentifier());
 			GraphObj->RebuildGraph();
 
-			RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SReferenceExplorer::TriggerZoomToFit));
+			RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 		}
 	}
 }
 
-FActionMenuContent SReferenceExplorer::OnCreateGraphActionMenu(UEdGraph* InGraph, const FVector2D& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClosed)
+FActionMenuContent SRefExplorer::OnCreateGraphActionMenu(UEdGraph* InGraph, const FVector2D& InNodePosition, const TArray<UEdGraphPin*>& InDraggedPins, bool bAutoExpand, SGraphEditor::FActionMenuClosed InOnMenuClosed)
 {
 	// no context menu when not over a node
 	return FActionMenuContent();
 }
 
-void SReferenceExplorer::RefreshClicked()
+void SRefExplorer::RefreshClicked()
 {
 	RebuildGraph();
 
 	TriggerZoomToFit(0, 0);
-	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SReferenceExplorer::TriggerZoomToFit));
+	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 }
 
-FText SReferenceExplorer::GetStatusText() const
+FText SRefExplorer::GetStatusText() const
 {
 	FString DirtyPackages;
 
@@ -1317,53 +1313,53 @@ FText SReferenceExplorer::GetStatusText() const
 	return FText();
 }
 
-void SReferenceExplorer::RegisterActions()
+void SRefExplorer::RegisterActions()
 {
-	ReferenceViewerActions = MakeShareable(new FUICommandList);
-	FReferenceExplorerCommands::Register();
+	RefExplorerActions = MakeShareable(new FUICommandList);
+	FRefExplorerCommands::Register();
 
-	ReferenceViewerActions->MapAction(
-		FReferenceExplorerCommands::Get().ZoomToFit,
-		FExecuteAction::CreateSP(this, &SReferenceExplorer::ZoomToFit),
-		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::CanZoomToFit));
+	RefExplorerActions->MapAction(
+		FRefExplorerCommands::Get().ZoomToFit,
+		FExecuteAction::CreateSP(this, &SRefExplorer::ZoomToFit),
+		FCanExecuteAction::CreateSP(this, &SRefExplorer::CanZoomToFit));
 
-	ReferenceViewerActions->MapAction(
+	RefExplorerActions->MapAction(
 		FGlobalEditorCommonCommands::Get().FindInContentBrowser,
-		FExecuteAction::CreateSP(this, &SReferenceExplorer::ShowSelectionInContentBrowser),
-		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::HasAtLeastOnePackageNodeSelected));
+		FExecuteAction::CreateSP(this, &SRefExplorer::ShowSelectionInContentBrowser),
+		FCanExecuteAction::CreateSP(this, &SRefExplorer::HasAtLeastOnePackageNodeSelected));
 
-	ReferenceViewerActions->MapAction(
-		FReferenceExplorerCommands::Get().OpenSelectedInAssetEditor,
-		FExecuteAction::CreateSP(this, &SReferenceExplorer::OpenSelectedInAssetEditor),
-		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::HasAtLeastOneRealNodeSelected));
+	RefExplorerActions->MapAction(
+		FRefExplorerCommands::Get().OpenSelectedInAssetEditor,
+		FExecuteAction::CreateSP(this, &SRefExplorer::OpenSelectedInAssetEditor),
+		FCanExecuteAction::CreateSP(this, &SRefExplorer::HasAtLeastOneRealNodeSelected));
 
-	ReferenceViewerActions->MapAction(
-		FReferenceExplorerCommands::Get().CopyReferencedObjects,
-		FExecuteAction::CreateSP(this, &SReferenceExplorer::CopyReferencedObjects),
-		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::HasAtLeastOnePackageNodeSelected));
+	RefExplorerActions->MapAction(
+		FRefExplorerCommands::Get().CopyReferencedObjects,
+		FExecuteAction::CreateSP(this, &SRefExplorer::CopyReferencedObjects),
+		FCanExecuteAction::CreateSP(this, &SRefExplorer::HasAtLeastOnePackageNodeSelected));
 
-	ReferenceViewerActions->MapAction(
-		FReferenceExplorerCommands::Get().CopyReferencingObjects,
-		FExecuteAction::CreateSP(this, &SReferenceExplorer::CopyReferencingObjects),
-		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::HasAtLeastOnePackageNodeSelected));
+	RefExplorerActions->MapAction(
+		FRefExplorerCommands::Get().CopyReferencingObjects,
+		FExecuteAction::CreateSP(this, &SRefExplorer::CopyReferencingObjects),
+		FCanExecuteAction::CreateSP(this, &SRefExplorer::HasAtLeastOnePackageNodeSelected));
 
-	ReferenceViewerActions->MapAction(
-		FReferenceExplorerCommands::Get().ShowReferencedObjects,
-		FExecuteAction::CreateSP(this, &SReferenceExplorer::ShowReferencedObjects),
-		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::HasAtLeastOnePackageNodeSelected));
+	RefExplorerActions->MapAction(
+		FRefExplorerCommands::Get().ShowReferencedObjects,
+		FExecuteAction::CreateSP(this, &SRefExplorer::ShowReferencedObjects),
+		FCanExecuteAction::CreateSP(this, &SRefExplorer::HasAtLeastOnePackageNodeSelected));
 
-	ReferenceViewerActions->MapAction(
-		FReferenceExplorerCommands::Get().ShowReferencingObjects,
-		FExecuteAction::CreateSP(this, &SReferenceExplorer::ShowReferencingObjects),
-		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::HasAtLeastOnePackageNodeSelected));
+	RefExplorerActions->MapAction(
+		FRefExplorerCommands::Get().ShowReferencingObjects,
+		FExecuteAction::CreateSP(this, &SRefExplorer::ShowReferencingObjects),
+		FCanExecuteAction::CreateSP(this, &SRefExplorer::HasAtLeastOnePackageNodeSelected));
 
-	ReferenceViewerActions->MapAction(
-		FReferenceExplorerCommands::Get().ShowReferenceTree,
-		FExecuteAction::CreateSP(this, &SReferenceExplorer::ShowReferenceTree),
-		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::HasExactlyOnePackageNodeSelected));
+	RefExplorerActions->MapAction(
+		FRefExplorerCommands::Get().ShowReferenceTree,
+		FExecuteAction::CreateSP(this, &SRefExplorer::ShowReferenceTree),
+		FCanExecuteAction::CreateSP(this, &SRefExplorer::HasExactlyOnePackageNodeSelected));
 }
 
-void SReferenceExplorer::ShowSelectionInContentBrowser()
+void SRefExplorer::ShowSelectionInContentBrowser()
 {
 	TArray<FAssetData> AssetList;
 
@@ -1371,11 +1367,11 @@ void SReferenceExplorer::ShowSelectionInContentBrowser()
 	TSet<UObject*> SelectedNodes = GraphEditorPtr->GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator It(SelectedNodes); It; ++It)
 	{
-		if (UEdGraphNode_ReferenceExplorer* ReferenceNode = Cast<UEdGraphNode_ReferenceExplorer>(*It))
+		if (UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(*It))
 		{
-			if (ReferenceNode->GetAssetData().IsValid())
+			if (RefExplorerNode->GetAssetData().IsValid())
 			{
-				AssetList.Add(ReferenceNode->GetAssetData());
+				AssetList.Add(RefExplorerNode->GetAssetData());
 			}
 		}
 	}
@@ -1386,15 +1382,15 @@ void SReferenceExplorer::ShowSelectionInContentBrowser()
 	}
 }
 
-void SReferenceExplorer::OpenSelectedInAssetEditor()
+void SRefExplorer::OpenSelectedInAssetEditor()
 {
 	TArray<FAssetIdentifier> IdentifiersToEdit;
 	TSet<UObject*> SelectedNodes = GraphEditorPtr->GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator It(SelectedNodes); It; ++It)
 	{
-		if (UEdGraphNode_ReferenceExplorer* ReferenceNode = Cast<UEdGraphNode_ReferenceExplorer>(*It))
+		if (UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(*It))
 		{
-			IdentifiersToEdit.Add(ReferenceNode->GetIdentifier());
+			IdentifiersToEdit.Add(RefExplorerNode->GetIdentifier());
 		}
 	}
 
@@ -1402,7 +1398,7 @@ void SReferenceExplorer::OpenSelectedInAssetEditor()
 	FEditorDelegates::OnEditAssetIdentifiers.Broadcast(IdentifiersToEdit);
 }
 
-FString SReferenceExplorer::GetReferencedObjectsList() const
+FString SRefExplorer::GetReferencedObjectsList() const
 {
 	FString ReferencedObjectsList;
 
@@ -1446,7 +1442,7 @@ FString SReferenceExplorer::GetReferencedObjectsList() const
 	return ReferencedObjectsList;
 }
 
-FString SReferenceExplorer::GetReferencingObjectsList() const
+FString SRefExplorer::GetReferencingObjectsList() const
 {
 	FString ReferencingObjectsList;
 
@@ -1490,31 +1486,31 @@ FString SReferenceExplorer::GetReferencingObjectsList() const
 	return ReferencingObjectsList;
 }
 
-void SReferenceExplorer::CopyReferencedObjects()
+void SRefExplorer::CopyReferencedObjects()
 {
 	const FString ReferencedObjectsList = GetReferencedObjectsList();
 	FPlatformApplicationMisc::ClipboardCopy(*ReferencedObjectsList);
 }
 
-void SReferenceExplorer::CopyReferencingObjects()
+void SRefExplorer::CopyReferencingObjects()
 {
 	const FString ReferencingObjectsList = GetReferencingObjectsList();
 	FPlatformApplicationMisc::ClipboardCopy(*ReferencingObjectsList);
 }
 
-void SReferenceExplorer::ShowReferencedObjects()
+void SRefExplorer::ShowReferencedObjects()
 {
 	const FString ReferencedObjectsList = GetReferencedObjectsList();
 	SGenericDialogWidget::OpenDialog(LOCTEXT("ReferencedObjectsDlgTitle", "Referenced Objects"), SNew(STextBlock).Text(FText::FromString(ReferencedObjectsList)));
 }
 
-void SReferenceExplorer::ShowReferencingObjects()
+void SRefExplorer::ShowReferencingObjects()
 {
 	const FString ReferencingObjectsList = GetReferencingObjectsList();
 	SGenericDialogWidget::OpenDialog(LOCTEXT("ReferencingObjectsDlgTitle", "Referencing Objects"), SNew(STextBlock).Text(FText::FromString(ReferencingObjectsList)));
 }
 
-void SReferenceExplorer::ShowReferenceTree()
+void SRefExplorer::ShowReferenceTree()
 {
 	UObject* SelectedObject = GetObjectFromSingleSelectedNode();
 
@@ -1539,17 +1535,17 @@ void SReferenceExplorer::ShowReferenceTree()
 	}
 }
 
-UObject* SReferenceExplorer::GetObjectFromSingleSelectedNode() const
+UObject* SRefExplorer::GetObjectFromSingleSelectedNode() const
 {
 	UObject* ReturnObject = nullptr;
 
 	TSet<UObject*> SelectedNodes = GraphEditorPtr->GetSelectedNodes();
 	if (ensure(SelectedNodes.Num()) == 1)
 	{
-		UEdGraphNode_ReferenceExplorer* ReferenceNode = Cast<UEdGraphNode_ReferenceExplorer>(SelectedNodes.Array()[0]);
-		if (ReferenceNode)
+		UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(SelectedNodes.Array()[0]);
+		if (RefExplorerNode)
 		{
-			const FAssetData& AssetData = ReferenceNode->GetAssetData();
+			const FAssetData& AssetData = RefExplorerNode->GetAssetData();
 			if (AssetData.IsAssetLoaded())
 			{
 				ReturnObject = AssetData.GetAsset();
@@ -1566,23 +1562,23 @@ UObject* SReferenceExplorer::GetObjectFromSingleSelectedNode() const
 	return ReturnObject;
 }
 
-void SReferenceExplorer::GetPackageNamesFromSelectedNodes(TSet<FName>& OutNames) const
+void SRefExplorer::GetPackageNamesFromSelectedNodes(TSet<FName>& OutNames) const
 {
 	TSet<UObject*> SelectedNodes = GraphEditorPtr->GetSelectedNodes();
 	
 	for (UObject* Node : SelectedNodes)
 	{
-		if (UEdGraphNode_ReferenceExplorer* ReferenceNode = Cast<UEdGraphNode_ReferenceExplorer>(Node))
+		if (UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(Node))
 		{
-			if (ReferenceNode->GetIdentifier().IsPackage())
+			if (RefExplorerNode->GetIdentifier().IsPackage())
 			{
-				OutNames.Add(ReferenceNode->GetIdentifier().PackageName);
+				OutNames.Add(RefExplorerNode->GetIdentifier().PackageName);
 			}
 		}
 	}
 }
 
-bool SReferenceExplorer::HasExactlyOneNodeSelected() const
+bool SRefExplorer::HasExactlyOneNodeSelected() const
 {
 	if (GraphEditorPtr.IsValid())
 	{
@@ -1592,7 +1588,7 @@ bool SReferenceExplorer::HasExactlyOneNodeSelected() const
 	return false;
 }
 
-bool SReferenceExplorer::HasExactlyOnePackageNodeSelected() const
+bool SRefExplorer::HasExactlyOnePackageNodeSelected() const
 {
 	if (GraphEditorPtr.IsValid())
 	{
@@ -1604,10 +1600,10 @@ bool SReferenceExplorer::HasExactlyOnePackageNodeSelected() const
 		TSet<UObject*> SelectedNodes = GraphEditorPtr->GetSelectedNodes();
 		for (UObject* Node : SelectedNodes)
 		{
-			UEdGraphNode_ReferenceExplorer* ReferenceNode = Cast<UEdGraphNode_ReferenceExplorer>(Node);
-			if (ReferenceNode)
+			UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(Node);
+			if (RefExplorerNode)
 			{
-				if (ReferenceNode->IsPackage())
+				if (RefExplorerNode->IsPackage())
 				{
 					return true;
 				}
@@ -1619,17 +1615,17 @@ bool SReferenceExplorer::HasExactlyOnePackageNodeSelected() const
 	return false;
 }
 
-bool SReferenceExplorer::HasAtLeastOnePackageNodeSelected() const
+bool SRefExplorer::HasAtLeastOnePackageNodeSelected() const
 {
 	if (GraphEditorPtr.IsValid())
 	{
 		TSet<UObject*> SelectedNodes = GraphEditorPtr->GetSelectedNodes();
 		for (UObject* Node : SelectedNodes)
 		{
-			UEdGraphNode_ReferenceExplorer* ReferenceNode = Cast<UEdGraphNode_ReferenceExplorer>(Node);
-			if (ReferenceNode)
+			UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(Node);
+			if (RefExplorerNode)
 			{
-				if (ReferenceNode->IsPackage())
+				if (RefExplorerNode->IsPackage())
 				{
 					return true;
 				}
@@ -1640,15 +1636,15 @@ bool SReferenceExplorer::HasAtLeastOnePackageNodeSelected() const
 	return false;
 }
 
-bool SReferenceExplorer::HasAtLeastOneRealNodeSelected() const
+bool SRefExplorer::HasAtLeastOneRealNodeSelected() const
 {
 	if (GraphEditorPtr.IsValid())
 	{
 		TSet<UObject*> SelectedNodes = GraphEditorPtr->GetSelectedNodes();
 		for (UObject* Node : SelectedNodes)
 		{
-			UEdGraphNode_ReferenceExplorer* ReferenceNode = Cast<UEdGraphNode_ReferenceExplorer>(Node);
-			if (ReferenceNode)
+			UEdGraphNode_RefExplorer* RefExplorerNode = Cast<UEdGraphNode_RefExplorer>(Node);
+			if (RefExplorerNode)
 			{
 				return true;
 			}
@@ -1658,13 +1654,13 @@ bool SReferenceExplorer::HasAtLeastOneRealNodeSelected() const
 	return false;
 }
 
-void SReferenceExplorer::OnAssetRegistryChanged(const FAssetData& AssetData)
+void SRefExplorer::OnAssetRegistryChanged(const FAssetData& AssetData)
 {
 	// We don't do more specific checking because that data is not exposed, and it wouldn't handle newly added references anyway
 	bDirtyResults = true;
 }
 
-void SReferenceExplorer::OnInitialAssetRegistrySearchComplete()
+void SRefExplorer::OnInitialAssetRegistrySearchComplete()
 {
 	if (GraphObj)
 	{
@@ -1672,7 +1668,7 @@ void SReferenceExplorer::OnInitialAssetRegistrySearchComplete()
 	}
 }
 
-void SReferenceExplorer::ZoomToFit()
+void SRefExplorer::ZoomToFit()
 {
 	if (GraphEditorPtr.IsValid())
 	{
@@ -1680,7 +1676,7 @@ void SReferenceExplorer::ZoomToFit()
 	}
 }
 
-bool SReferenceExplorer::CanZoomToFit() const
+bool SRefExplorer::CanZoomToFit() const
 {
 	if (GraphEditorPtr.IsValid())
 	{
@@ -1690,21 +1686,21 @@ bool SReferenceExplorer::CanZoomToFit() const
 	return false;
 }
 
-TSharedRef<SWidget> SReferenceExplorer::GetShowMenuContent()
+TSharedRef<SWidget> SRefExplorer::GetShowMenuContent()
 {
-	FMenuBuilder MenuBuilder(true, ReferenceViewerActions);
+	FMenuBuilder MenuBuilder(true, RefExplorerActions);
 	return MenuBuilder.MakeWidget();
 }
 
-TSharedRef<SWidget> SReferenceExplorer::MakeToolBar()
+TSharedRef<SWidget> SRefExplorer::MakeToolBar()
 {
-	FToolBarBuilder ToolBarBuilder(ReferenceViewerActions, FMultiBoxCustomization::None, TSharedPtr<FExtender>(), true);
+	FToolBarBuilder ToolBarBuilder(RefExplorerActions, FMultiBoxCustomization::None, TSharedPtr<FExtender>(), true);
 	
 	//////ToolBarBuilder.SetStyle(&FReferenceViewerStyle::Get(), "AssetEditorToolbar");
 	//////ToolBarBuilder.BeginSection("Test");
 
 	//////ToolBarBuilder.AddToolBarButton(
-	//////	FUIAction(FExecuteAction::CreateSP(this, &SReferenceExplorer::RefreshClicked)),
+	//////	FUIAction(FExecuteAction::CreateSP(this, &SRefExplorer::RefreshClicked)),
 	//////	NAME_None,
 	//////	TAttribute<FText>(),
 	//////	TAttribute<FText>(),
@@ -1712,25 +1708,25 @@ TSharedRef<SWidget> SReferenceExplorer::MakeToolBar()
 
 	//////ToolBarBuilder.AddToolBarButton(
 	//////	FUIAction(
-	//////		FExecuteAction::CreateSP(this, &SReferenceExplorer::BackClicked),
-	//////		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::IsBackEnabled)
+	//////		FExecuteAction::CreateSP(this, &SRefExplorer::BackClicked),
+	//////		FCanExecuteAction::CreateSP(this, &SRefExplorer::IsBackEnabled)
 	//////	),
 	//////	NAME_None,
 	//////	TAttribute<FText>(),
-	//////	TAttribute<FText>::CreateSP(this, &SReferenceExplorer::GetHistoryBackTooltip),
+	//////	TAttribute<FText>::CreateSP(this, &SRefExplorer::GetHistoryBackTooltip),
 	//////	FSlateIcon(FReferenceViewerStyle::Get().GetStyleSetName(), "Icons.ArrowLeft"));
 
 	//////ToolBarBuilder.AddToolBarButton(
 	//////	FUIAction(
-	//////		FExecuteAction::CreateSP(this, &SReferenceExplorer::ForwardClicked),
-	//////		FCanExecuteAction::CreateSP(this, &SReferenceExplorer::IsForwardEnabled)
+	//////		FExecuteAction::CreateSP(this, &SRefExplorer::ForwardClicked),
+	//////		FCanExecuteAction::CreateSP(this, &SRefExplorer::IsForwardEnabled)
 	//////	),
 	//////	NAME_None,
 	//////	TAttribute<FText>(),
-	//////	TAttribute<FText>::CreateSP(this, &SReferenceExplorer::GetHistoryForwardTooltip),
+	//////	TAttribute<FText>::CreateSP(this, &SRefExplorer::GetHistoryForwardTooltip),
 	//////	FSlateIcon(FReferenceViewerStyle::Get().GetStyleSetName(), "Icons.ArrowRight"));
 
-	//////ToolBarBuilder.AddToolBarButton(FReferenceExplorerCommands::Get().FindPath,
+	//////ToolBarBuilder.AddToolBarButton(FRefExplorerCommands::Get().FindPath,
 	//////	NAME_None,
 	//////	TAttribute<FText>(),
 	//////	TAttribute<FText>(),
@@ -1740,13 +1736,13 @@ TSharedRef<SWidget> SReferenceExplorer::MakeToolBar()
 
 	//////ToolBarBuilder.AddComboButton(
 	//////	FUIAction(),
-	//////	FOnGetContent::CreateSP(this, &SReferenceExplorer::GetShowMenuContent),
+	//////	FOnGetContent::CreateSP(this, &SRefExplorer::GetShowMenuContent),
 	//////	TAttribute<FText>(),
 	//////	TAttribute<FText>(),
 	//////	FSlateIcon(FReferenceViewerStyle::Get().GetStyleSetName(), "Icons.Visibility"),
 	//////	/*bInSimpleComboBox*/ false);
 
-	//////ToolBarBuilder.AddToolBarButton(FReferenceExplorerCommands::Get().ShowDuplicates,
+	//////ToolBarBuilder.AddToolBarButton(FRefExplorerCommands::Get().ShowDuplicates,
 	//////	NAME_None,
 	//////	TAttribute<FText>(),
 	//////	TAttribute<FText>::CreateLambda([this]() -> FText
@@ -1756,14 +1752,14 @@ TSharedRef<SWidget> SReferenceExplorer::MakeToolBar()
 	//////				return LOCTEXT("DuplicatesDisabledTooltip", "Duplicates are always shown when using the Find Path tool.");
 	//////			}
 
-	//////			return FReferenceExplorerCommands::Get().ShowDuplicates->GetDescription();
+	//////			return FRefExplorerCommands::Get().ShowDuplicates->GetDescription();
 	//////		}),
 
 	//////	FSlateIcon(FReferenceViewerStyle::Get().GetStyleSetName(), "Icons.Duplicate"));
 
 	//////ToolBarBuilder.AddSeparator();
 
-	//////ToolBarBuilder.AddToolBarButton(FReferenceExplorerCommands::Get().Filters,
+	//////ToolBarBuilder.AddToolBarButton(FRefExplorerCommands::Get().Filters,
 	//////	NAME_None,
 	//////	TAttribute<FText>(),
 	//////	TAttribute<FText>::CreateLambda([this]() -> FText
@@ -1773,12 +1769,12 @@ TSharedRef<SWidget> SReferenceExplorer::MakeToolBar()
 	//////				return LOCTEXT("FiltersDisabledTooltip", "Filtering is disabled when using the Find Path tool.");
 	//////			}
 
-	//////			return FReferenceExplorerCommands::Get().Filters->GetDescription();
+	//////			return FRefExplorerCommands::Get().Filters->GetDescription();
 	//////		}),
 
 	//////	FSlateIcon(FReferenceViewerStyle::Get().GetStyleSetName(), "Icons.Filters"));
 
-	//////ToolBarBuilder.AddToolBarButton(FReferenceExplorerCommands::Get().AutoFilters,
+	//////ToolBarBuilder.AddToolBarButton(FRefExplorerCommands::Get().AutoFilters,
 	//////	NAME_None,
 	//////	TAttribute<FText>(),
 	//////	TAttribute<FText>::CreateLambda([this]() -> FText
@@ -1788,7 +1784,7 @@ TSharedRef<SWidget> SReferenceExplorer::MakeToolBar()
 	//////				return LOCTEXT("AutoFiltersDisabledTooltip", "AutoFiltering is disabled when using the Find Path tool.");
 	//////			}
 
-	//////			return FReferenceExplorerCommands::Get().AutoFilters->GetDescription();
+	//////			return FRefExplorerCommands::Get().AutoFilters->GetDescription();
 	//////		}),
 
 	//////	FSlateIcon(FReferenceViewerStyle::Get().GetStyleSetName(), "Icons.AutoFilters"));
@@ -1799,12 +1795,12 @@ TSharedRef<SWidget> SReferenceExplorer::MakeToolBar()
 	return ToolBarBuilder.MakeWidget();
 }
 
-TSharedRef<SWidget> SReferenceExplorer::GenerateFindPathAssetPickerMenu()
+TSharedRef<SWidget> SRefExplorer::GenerateFindPathAssetPickerMenu()
 {
 	FAssetPickerConfig AssetPickerConfig;
 	AssetPickerConfig.Filter.bRecursiveClasses = true;
-	AssetPickerConfig.OnAssetSelected = FOnAssetSelected::CreateSP(this, &SReferenceExplorer::OnFindPathAssetSelected);
-	AssetPickerConfig.OnAssetEnterPressed = FOnAssetEnterPressed::CreateSP(this, &SReferenceExplorer::OnFindPathAssetEnterPressed);
+	AssetPickerConfig.OnAssetSelected = FOnAssetSelected::CreateSP(this, &SRefExplorer::OnFindPathAssetSelected);
+	AssetPickerConfig.OnAssetEnterPressed = FOnAssetEnterPressed::CreateSP(this, &SRefExplorer::OnFindPathAssetEnterPressed);
 	AssetPickerConfig.InitialAssetViewType = EAssetViewType::List;
 	AssetPickerConfig.bAllowNullSelection = true;
 	AssetPickerConfig.bFocusSearchBoxWhenOpened = true;
@@ -1824,17 +1820,17 @@ TSharedRef<SWidget> SReferenceExplorer::GenerateFindPathAssetPickerMenu()
 		];
 }
 
-void SReferenceExplorer::OnFindPathAssetSelected(const FAssetData& AssetData)
+void SRefExplorer::OnFindPathAssetSelected(const FAssetData& AssetData)
 {
 	FindPathAssetPicker->SetIsOpen(false);
 
 	GraphObj->SetGraphRoot(FAssetIdentifier(AssetData.PackageName));
 	GraphObj->RebuildGraph();
 
-	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SReferenceExplorer::TriggerZoomToFit));
+	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 }
 
-void SReferenceExplorer::OnFindPathAssetEnterPressed(const TArray<FAssetData>& AssetData)
+void SRefExplorer::OnFindPathAssetEnterPressed(const TArray<FAssetData>& AssetData)
 {
 	FindPathAssetPicker->SetIsOpen(false);
 
@@ -1844,12 +1840,12 @@ void SReferenceExplorer::OnFindPathAssetEnterPressed(const TArray<FAssetData>& A
 		GraphObj->RebuildGraph();
 	}
 
-	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SReferenceExplorer::TriggerZoomToFit));
+	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 }
 
 namespace FRefExplorerEditorModule_PRIVATE
 {
-	const FName ReferenceExplorer("FRefExplorerEditorModule_Tabs_ReferenceExplorer");
+	const FName RefExplorerTabId("FRefExplorerEditorModule_Tabs_RefExplorer");
 
 	//--------------------------------------------------------------------
 	// FContentBrowserSelectionMenuExtender
@@ -1917,23 +1913,23 @@ namespace FRefExplorerEditorModule_PRIVATE
 	};
 
 	//--------------------------------------------------------------------
-	// FContentBrowserSelectionMenuExtender_ReferenceExplorer
+	// FContentBrowserSelectionMenuExtender_RefExplorer
 	//--------------------------------------------------------------------
 
-	class FContentBrowserSelectionMenuExtender_ReferenceExplorer : public FContentBrowserSelectionMenuExtender<UObject>
+	class FContentBrowserSelectionMenuExtender_RefExplorer : public FContentBrowserSelectionMenuExtender<UObject>
 	{
 	public:
-		FContentBrowserSelectionMenuExtender_ReferenceExplorer(const FText& label, const FText& toolTip, const FName styleSetName, const FName iconName)
+		FContentBrowserSelectionMenuExtender_RefExplorer(const FText& label, const FText& toolTip, const FName styleSetName, const FName iconName)
 			: FContentBrowserSelectionMenuExtender(label, toolTip, styleSetName, iconName)
 		{}
 
 	protected:
 		virtual void Execute(FAssetIdentifier assetIdentifier) const override
 		{
-			if (TSharedPtr<SDockTab> NewTab = FGlobalTabmanager::Get()->TryInvokeTab(ReferenceExplorer))
+			if (TSharedPtr<SDockTab> NewTab = FGlobalTabmanager::Get()->TryInvokeTab(RefExplorerTabId))
 			{
-				TSharedRef<SReferenceExplorer> ReferenceViewer = StaticCastSharedRef<SReferenceExplorer>(NewTab->GetContent());
-				ReferenceViewer->SetGraphRootIdentifier(assetIdentifier, FReferenceViewerParams());
+				TSharedRef<SRefExplorer> RefExplorer = StaticCastSharedRef<SRefExplorer>(NewTab->GetContent());
+				RefExplorer->SetGraphRootIdentifier(assetIdentifier, FReferenceViewerParams());
 			}
 		}
 	};
@@ -1949,11 +1945,11 @@ void FRefExplorerEditorModule::StartupModule()
 {
 	StartupStyle();
 
-	ContentBrowserSelectionMenuExtenders.Add(MakeShareable(new FRefExplorerEditorModule_PRIVATE::FContentBrowserSelectionMenuExtender_ReferenceExplorer(
-		LOCTEXT("FContentBrowserSelectionMenuExtender_ReferenceExplorer_Label", "Reference Explorer"),
-		LOCTEXT("FContentBrowserSelectionMenuExtender_ReferenceExplorer_ToolTip", "Explore and edit properties that are referencing selected asset"),
+	ContentBrowserSelectionMenuExtenders.Add(MakeShareable(new FRefExplorerEditorModule_PRIVATE::FContentBrowserSelectionMenuExtender_RefExplorer(
+		LOCTEXT("FContentBrowserSelectionMenuExtender_RefExplorer_Label", "Ref Explorer"),
+		LOCTEXT("FContentBrowserSelectionMenuExtender_RefExplorer_ToolTip", "Explore and edit properties that are referencing selected asset"),
 		GetStyleSetName(),
-		GetContextMenuReferenceExplorerIconName()
+		GetContextMenuRefExplorerIconName()
 	)));
 
 	for (const TSharedPtr<IContentBrowserSelectionMenuExtender>& extender : ContentBrowserSelectionMenuExtenders)
@@ -1964,18 +1960,18 @@ void FRefExplorerEditorModule::StartupModule()
 		}
 	}
 
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FRefExplorerEditorModule_PRIVATE::ReferenceExplorer, FOnSpawnTab::CreateRaw(this, &FRefExplorerEditorModule::OnSpawnTab));
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(FRefExplorerEditorModule_PRIVATE::RefExplorerTabId, FOnSpawnTab::CreateRaw(this, &FRefExplorerEditorModule::OnSpawnTab));
 
-	ReferenceExplorerGraphNodeFactory = MakeShareable(new FReferenceExplorerGraphNodeFactory());
-	FEdGraphUtilities::RegisterVisualNodeFactory(ReferenceExplorerGraphNodeFactory);
+	RefExplorerGraphNodeFactory = MakeShareable(new FRefExplorerGraphNodeFactory());
+	FEdGraphUtilities::RegisterVisualNodeFactory(RefExplorerGraphNodeFactory);
 }
 
 void FRefExplorerEditorModule::ShutdownModule()
 {
-	FEdGraphUtilities::UnregisterVisualNodeFactory(ReferenceExplorerGraphNodeFactory);
-	ReferenceExplorerGraphNodeFactory.Reset();
+	FEdGraphUtilities::UnregisterVisualNodeFactory(RefExplorerGraphNodeFactory);
+	RefExplorerGraphNodeFactory.Reset();
 
-	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FRefExplorerEditorModule_PRIVATE::ReferenceExplorer);
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(FRefExplorerEditorModule_PRIVATE::RefExplorerTabId);
 
 	ContentBrowserSelectionMenuExtenders.Empty();
 
@@ -1984,7 +1980,7 @@ void FRefExplorerEditorModule::ShutdownModule()
 
 FName FRefExplorerEditorModule::GetStyleSetName() { return "FRefExplorerEditorModule_Style"; }
 
-FName FRefExplorerEditorModule::GetContextMenuReferenceExplorerIconName() { return "FRefExplorerEditorModule_Style_ContextMenu_ReferenceExplorer"; }
+FName FRefExplorerEditorModule::GetContextMenuRefExplorerIconName() { return "FRefExplorerEditorModule_Style_ContextMenu_RefExplorer"; }
 
 void FRefExplorerEditorModule::StartupStyle()
 {
@@ -2001,7 +1997,7 @@ void FRefExplorerEditorModule::StartupStyle()
 		StyleSet->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("RefExplorer/Resources"));
 	}
 
-	StyleSet->Set(GetContextMenuReferenceExplorerIconName(), new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("Icon128"), TEXT(".png")), Icon20x20));
+	StyleSet->Set(GetContextMenuRefExplorerIconName(), new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("Icon128"), TEXT(".png")), Icon20x20));
 
 	const int BodyRadius = 10.0; // Designed for 4 but using 10 to accomodate the shared selection border.  Update to 4 all nodes get aligned.
 	const FLinearColor SpillColor(.3, .3, .3, 1.0);
@@ -2028,7 +2024,7 @@ void FRefExplorerEditorModule::ShutdownStyle()
 TSharedRef<SDockTab> FRefExplorerEditorModule::OnSpawnTab(const FSpawnTabArgs& SpawnTabArgs)
 {
 	const TSharedRef<SDockTab> DockTab = SNew(SDockTab).TabRole(ETabRole::NomadTab);
-	DockTab->SetContent(SNew(SReferenceExplorer));
+	DockTab->SetContent(SNew(SRefExplorer));
 	return DockTab;
 }
 

@@ -20,25 +20,25 @@ class UEdGraph;
 class FAssetThumbnailPool;
 
 //------------------------------------------------------
-// FReferenceExplorerGraphNodeFactory
+// FRefExplorerGraphNodeFactory
 //------------------------------------------------------
 
-struct FReferenceExplorerGraphNodeFactory : public FGraphPanelNodeFactory
+struct FRefExplorerGraphNodeFactory : public FGraphPanelNodeFactory
 {
 	virtual TSharedPtr<SGraphNode> CreateNode(UEdGraphNode* InNode) const override;
 };
 
 //--------------------------------------------------------------------
-// SReferenceExplorer
+// SRefExplorer
 //--------------------------------------------------------------------
 
-class SReferenceExplorer : public SCompoundWidget
+class SRefExplorer : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SReferenceExplorer) {}
+	SLATE_BEGIN_ARGS(SRefExplorer) {}
 	SLATE_END_ARGS()
 
-	~SReferenceExplorer();
+	~SRefExplorer();
 
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs);
@@ -110,9 +110,9 @@ private:
 
 	TSharedPtr<SGraphEditor> GraphEditorPtr;
 
-	TSharedPtr<FUICommandList> ReferenceViewerActions;
+	TSharedPtr<FUICommandList> RefExplorerActions;
 
-	UEdGraph_ReferenceExplorer* GraphObj;
+	UEdGraph_RefExplorer* GraphObj;
 
 	/** True if our view is out of date due to asset registry changes */
 	bool bDirtyResults;
@@ -122,11 +122,11 @@ private:
 };
 
 //--------------------------------------------------------------------
-// UReferenceExplorerSchema
+// URefExplorerSchema
 //--------------------------------------------------------------------
 
 UCLASS()
-class UReferenceExplorerSchema : public UEdGraphSchema
+class URefExplorerSchema : public UEdGraphSchema
 {
 	GENERATED_UCLASS_BODY()
 
@@ -146,10 +146,10 @@ public:
 };
 
 //--------------------------------------------------------------------
-// FReferenceExplorerNodeInfo
+// FRefExplorerNodeInfo
 //--------------------------------------------------------------------
 
-struct FReferenceExplorerNodeInfo
+struct FRefExplorerNodeInfo
 {
 	FAssetIdentifier AssetId;
 
@@ -159,21 +159,21 @@ struct FReferenceExplorerNodeInfo
 
 	TSet<FAssetIdentifier> Parents;
 
-	FReferenceExplorerNodeInfo(const FAssetIdentifier& InAssetId) :AssetId(InAssetId) {};
+	FRefExplorerNodeInfo(const FAssetIdentifier& InAssetId) :AssetId(InAssetId) {};
 };
 
 //--------------------------------------------------------------------
-// UEdGraphNode_ReferenceExplorer
+// UEdGraphNode_RefExplorer
 //--------------------------------------------------------------------
 
 UCLASS()
-class UEdGraphNode_ReferenceExplorer : public UEdGraphNode
+class UEdGraphNode_RefExplorer : public UEdGraphNode
 {
 	GENERATED_UCLASS_BODY()
 
 	FORCEINLINE const FAssetIdentifier& GetIdentifier() const { return Identifier; }
 
-	UEdGraph_ReferenceExplorer* GetReferenceViewerGraph() const;
+	UEdGraph_RefExplorer* GetRefExplorerGraph() const;
 
 	// UEdGraphNode implementation
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override { return NodeTitle; }
@@ -193,8 +193,8 @@ class UEdGraphNode_ReferenceExplorer : public UEdGraphNode
 	FORCEINLINE UEdGraphPin* GetReferencerPin() { return ReferencerPin; }
 
 private:
-	void SetupReferenceNode(const FIntPoint& NodeLoc, const FAssetIdentifier& NewIdentifier, const FAssetData& InAssetData);
-	void AddReferencer(UEdGraphNode_ReferenceExplorer* ReferencerNode);
+	void SetupRefExplorerNode(const FIntPoint& NodeLoc, const FAssetIdentifier& NewIdentifier, const FAssetData& InAssetData);
+	void AddReferencer(UEdGraphNode_RefExplorer* ReferencerNode);
 
 protected:
 	FAssetIdentifier Identifier;
@@ -211,15 +211,15 @@ protected:
 	UEdGraphPin* DependencyPin;
 	UEdGraphPin* ReferencerPin;
 
-	friend UEdGraph_ReferenceExplorer;
+	friend UEdGraph_RefExplorer;
 };
 
 //--------------------------------------------------------------------
-// UEdGraph_ReferenceExplorer
+// UEdGraph_RefExplorer
 //--------------------------------------------------------------------
 
 UCLASS()
-class UEdGraph_ReferenceExplorer : public UEdGraph
+class UEdGraph_RefExplorer : public UEdGraph
 {
 	GENERATED_UCLASS_BODY()
 
@@ -228,30 +228,30 @@ public:
 	virtual void BeginDestroy() override;
 	// End UObject implementation
 
-	/** Set reference viewer to focus on these assets */
+	/** Set Ref Explorer to focus on these assets */
 	void SetGraphRoot(const FAssetIdentifier& GraphRootIdentifier, const FIntPoint& GraphRootOrigin = FIntPoint(ForceInitToZero));
 
 	/** Accessor for the thumbnail pool in this graph */
 	const TSharedPtr<FAssetThumbnailPool>& GetAssetThumbnailPool() const;
 
 	/** Force the graph to rebuild */
-	UEdGraphNode_ReferenceExplorer* RebuildGraph();
+	UEdGraphNode_RefExplorer* RebuildGraph();
 
-	const FReferenceExplorerNodeInfo& GetGraphRootNodeInfo() const { return ReferencerNodeInfos[CurrentGraphRootIdentifier]; }
+	const FRefExplorerNodeInfo& GetGraphRootNodeInfo() const { return RefExplorerNodeInfos[CurrentGraphRootIdentifier]; }
 
 private:
-	FORCEINLINE void SetReferenceViewer(TSharedPtr<SReferenceExplorer> InViewer) { ReferenceViewer = InViewer; }
+	FORCEINLINE void SetRefExplorer(TSharedPtr<SRefExplorer> InRefExplorer) { RefExplorer = InRefExplorer; }
 
 	/* Searches for the AssetData for the list of packages derived from the AssetReferences  */
-	void GatherAssetData(TMap<FAssetIdentifier, FReferenceExplorerNodeInfo>& InNodeInfos);
+	void GatherAssetData(TMap<FAssetIdentifier, FRefExplorerNodeInfo>& InNodeInfos);
 
 	/* Uses the NodeInfos map to generate and layout the graph nodes */
-	UEdGraphNode_ReferenceExplorer* RecursivelyCreateNodes(
+	UEdGraphNode_RefExplorer* RecursivelyCreateNodes(
 		const FAssetIdentifier& InAssetId,
 		const FIntPoint& InNodeLoc,
 		const FAssetIdentifier& InParentId,
-		UEdGraphNode_ReferenceExplorer* InParentNode,
-		TMap<FAssetIdentifier, FReferenceExplorerNodeInfo>& InNodeInfos,
+		UEdGraphNode_RefExplorer* InParentNode,
+		TMap<FAssetIdentifier, FRefExplorerNodeInfo>& InNodeInfos,
 		bool bIsRoot = false
 	);
 
@@ -265,13 +265,13 @@ private:
 	TSharedPtr<FAssetThumbnailPool> AssetThumbnailPool;
 
 	/** Editor for this pool */
-	TWeakPtr<SReferenceExplorer> ReferenceViewer;
+	TWeakPtr<SRefExplorer> RefExplorer;
 
 	FAssetIdentifier CurrentGraphRootIdentifier;
 	
 	FIntPoint CurrentGraphRootOrigin;
 
-	TMap<FAssetIdentifier, FReferenceExplorerNodeInfo> ReferencerNodeInfos;
+	TMap<FAssetIdentifier, FRefExplorerNodeInfo> RefExplorerNodeInfos;
 
-	friend SReferenceExplorer;
+	friend SRefExplorer;
 };

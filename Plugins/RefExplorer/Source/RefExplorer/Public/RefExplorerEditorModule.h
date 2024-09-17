@@ -5,7 +5,7 @@
 #include "Modules/ModuleManager.h"
 
 class FSlateStyleSet;
-struct FReferenceExplorerGraphNodeFactory;
+struct FRefExplorerGraphNodeFactory;
 
 //------------------------------------------------------
 // FRefExplorerEditorModule
@@ -24,7 +24,7 @@ public:
 	virtual void ShutdownModule() override;
 
 	static FName GetStyleSetName();
-	static FName GetContextMenuReferenceExplorerIconName();
+	static FName GetContextMenuRefExplorerIconName();
 	
 	static const TSharedPtr<FSlateStyleSet> GetStyleSet() { return StyleSet; }
 
@@ -37,5 +37,5 @@ protected:
 protected:
 	static TSharedPtr<FSlateStyleSet> StyleSet;
 	TArray<TSharedPtr<IContentBrowserSelectionMenuExtender>> ContentBrowserSelectionMenuExtenders;
-	TSharedPtr<FReferenceExplorerGraphNodeFactory> ReferenceExplorerGraphNodeFactory;
+	TSharedPtr<FRefExplorerGraphNodeFactory> RefExplorerGraphNodeFactory;
 };
