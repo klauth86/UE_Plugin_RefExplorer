@@ -8,8 +8,8 @@ public class UE_Plugin_RefExplorerTarget : TargetRules
 	public UE_Plugin_RefExplorerTarget( TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
-		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_1;
+		DefaultBuildSettings = BuildSettingsVersion.Latest;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
 		ExtraModuleNames.Add("UE_Plugin_RefExplorer");
 	}
 }
