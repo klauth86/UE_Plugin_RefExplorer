@@ -1986,7 +1986,7 @@ void SRefExplorer::OnFindPathAssetEnterPressed(const TArray<FAssetData>& AssetDa
 
 namespace FRefExplorerEditorModule_PRIVATE
 {
-	const FName RefExplorerTabId("FRefExplorerEditorModule_Tabs_RefExplorer");
+	const FName RefExplorerTabId("Ref Explorer");
 
 	//--------------------------------------------------------------------
 	// FContentBrowserSelectionMenuExtender
@@ -2138,7 +2138,7 @@ void FRefExplorerEditorModule::StartupStyle()
 		StyleSet->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("RefExplorer/Resources"));
 	}
 
-	StyleSet->Set(GetContextMenuRefExplorerIconName(), new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("Icon128"), TEXT(".png")), Icon20x20));
+	StyleSet->Set(GetContextMenuRefExplorerIconName(), new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("Icon_ContextMenu_RefExplorer_128"), TEXT(".png")), Icon20x20));
 
 	const int BodyRadius = 10.0; // Designed for 4 but using 10 to accomodate the shared selection border.  Update to 4 all nodes get aligned.
 	const FLinearColor SpillColor(.3, .3, .3, 1.0);
