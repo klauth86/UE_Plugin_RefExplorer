@@ -990,7 +990,7 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 						}
 						else
 						{
-							FRefExplorerEditorModule_PRIVATE::FindRecursive(refBlueprint->GeneratedClass, refAssetClass, rootAsset, refPropInfos);
+							FRefExplorerEditorModule_PRIVATE::FindRecursive(refAssetClass, refAsset, rootAsset, refPropInfos);
 						}
 					}
 				}
