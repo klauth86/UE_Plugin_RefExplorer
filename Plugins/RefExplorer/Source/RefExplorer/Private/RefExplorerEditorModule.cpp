@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2024 Pentangle Studio under EULA https://www.unrealengine.com/en-US/eula/unreal
 
 #include "RefExplorerEditorModule.h"
 #include "RefExplorerEditorModule_private.h"
@@ -990,7 +990,7 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 						}
 						else
 						{
-							FRefExplorerEditorModule_PRIVATE::FindRecursive(refBlueprint->GeneratedClass, refAssetClass, rootAsset, refPropInfos);
+							FRefExplorerEditorModule_PRIVATE::FindRecursive(refAssetClass, refAsset, rootAsset, refPropInfos);
 						}
 					}
 				}
@@ -1229,6 +1229,8 @@ SRefExplorer::~SRefExplorer()
 			GraphObj->RemoveFromRoot();
 		}
 	}
+
+	FRefExplorerCommands::Unregister();
 }
 
 void SRefExplorer::Construct(const FArguments& InArgs)

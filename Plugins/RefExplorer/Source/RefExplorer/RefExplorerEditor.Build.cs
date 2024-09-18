@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2024 Pentangle Studio under EULA https://www.unrealengine.com/en-US/eula/unreal
 
 using UnrealBuildTool;
 
