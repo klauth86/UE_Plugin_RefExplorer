@@ -19,12 +19,12 @@
 		{
 			"Name": "RefExplorerEditor",
 			"Type": "Editor",
-            "LoadingPhase": "Default",
-            "PlatformAllowList": [
-                "Win64",
-                "Mac",
-                "Linux"
-            ]
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64",
+				"Mac",
+				"Linux"
+			]
 		}
 	]
 }
