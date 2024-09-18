@@ -29,12 +29,17 @@
 
 #define LOCTEXT_NAMESPACE "FRefExplorerEditorModule"
 
+#define FONT(...) FSlateFontInfo(FCoreStyle::GetDefaultFont(), __VA_ARGS__)
+
 //--------------------------------------------------------------------
 // COMMON
 //--------------------------------------------------------------------
 
 namespace FRefExplorerEditorModule_PRIVATE
 {
+	const FSlateFontInfo Small(FONT(8, "Regular"));
+	const FSlateFontInfo SmallBold(FONT(8, "Bold"));
+
 	enum class EDependencyPinCategory
 	{
 		LinkEndPassive = 0,
@@ -483,7 +488,6 @@ UEdGraphNode_RefExplorer* UEdGraph_RefExplorer::RebuildGraph()
 	RemoveAllNodes();
 
 	RefExplorerNodeInfos.Reset();
-	;
 	RefExplorerNodeInfos.FindOrAdd(CurrentGraphRootIdentifier, FRefExplorerNodeInfo(CurrentGraphRootIdentifier));
 
 	TMap<FAssetIdentifier, FRefExplorerEditorModule_PRIVATE::EDependencyPinCategory> ReferenceLinks;
@@ -609,7 +613,7 @@ void UEdGraph_RefExplorer::GetSortedLinks(const FAssetIdentifier& GraphRootIdent
 			}
 			return A.AssetId.PackageName.LexicalLess(B.AssetId.PackageName);
 		});
-	for (FAssetDependency LinkToAsset : LinksToAsset)
+	for (const FAssetDependency& LinkToAsset : LinksToAsset)
 	{
 		FRefExplorerEditorModule_PRIVATE::EDependencyPinCategory& Category = OutLinks.FindOrAdd(LinkToAsset.AssetId, FRefExplorerEditorModule_PRIVATE::EDependencyPinCategory::LinkEndActive);
 		bool bIsHard = IsHard(LinkToAsset.Properties);
@@ -722,15 +726,14 @@ UEdGraphNode_RefExplorer* UEdGraph_RefExplorer::RecursivelyCreateNodes(const FAs
 
 	FIntPoint ChildLoc = InNodeLoc;
 
-	const int32 NodeRadius = 400;
+	const int32 WidthStep = 256;
+	const int32 HeightStep = 400;
 	
 	if (InNodeInfos[InAssetId].Children.Num() > 0)
 	{
 		const float DeltaAngle = UE_PI / InNodeInfos[InAssetId].Children.Num();
-
-		const float LastAngle = DeltaAngle * (InNodeInfos[InAssetId].Children.Num() == 1 ? 0 : (InNodeInfos[InAssetId].Children.Num() - 1));
-		
-		const float Radius = NodeRadius / FMath::Max(FMath::Abs(1 - FMath::Cos(DeltaAngle)), FMath::Abs(FMath::Sin(DeltaAngle)));
+		const float LastAngle = DeltaAngle * (InNodeInfos[InAssetId].Children.Num() == 1 ? 0 : (InNodeInfos[InAssetId].Children.Num() - 1));		
+		const float Radius = HeightStep / FMath::Max(FMath::Abs(1 - FMath::Cos(DeltaAngle)), FMath::Abs(FMath::Sin(DeltaAngle)));
 
 		for (int32 ChildIdx = 0; ChildIdx < InNodeInfos[InAssetId].Children.Num(); ChildIdx++)
 		{
@@ -740,7 +743,7 @@ UEdGraphNode_RefExplorer* UEdGraph_RefExplorer::RecursivelyCreateNodes(const FAs
 
 			const float AccumAngle = ChildIdx * DeltaAngle;
 
-			ChildLoc.X = InNodeLoc.X + Radius * FMath::Cos(AccumAngle + (UE_PI - LastAngle / 2));
+			ChildLoc.X = InNodeLoc.X - (FMath::Min(ChildIdx, InNodeInfos[InAssetId].Children.Num() - ChildIdx - 1) + 1) * WidthStep;
 			ChildLoc.Y = InNodeLoc.Y - Radius * FMath::Sin(AccumAngle + (UE_PI - LastAngle / 2));
 
 			UEdGraphNode_RefExplorer* ChildNode = RecursivelyCreateNodes(ChildId, ChildLoc, InAssetId, NewNode, InNodeInfos);
@@ -890,14 +893,14 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 
 								if (objectPropertyValue == rootAsset)
 								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetName(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
+									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
 								}
 
 								if (UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset))
 								{
 									if (objectPropertyValue == rootBlueprint->GeneratedClass)
 									{
-										refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetName(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
+										refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
 									}
 								}
 							}
@@ -934,7 +937,7 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 
 								if (value == rootAsset)
 								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetName(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
+									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
 								}
 							}
 						}
@@ -968,7 +971,7 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 
 								if (value == rootAsset)
 								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetName(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
+									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
 								}
 							}
 						}
@@ -981,7 +984,7 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 
 								if (structProperty->Struct == scriptStruct)
 								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(structProperty->GetDisplayNameText().ToString()), FRefExplorerEditorModule_PRIVATE::GetCategory(structProperty));
+									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(structProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(structProperty)));
 								}
 							}
 						}
@@ -997,20 +1000,38 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 
 	TSharedRef<SWidget> refPropsWidget = SNullWidget::NullWidget;
 
+	TMultiMap<FString, FString> categorizedProps;
+
 	if (refPropInfos.Num())
 	{
-		bool isFirst = true;
-
-		TMultiMap<FString, FString> categorizedProps;
-
-		for (const FRefPropInfo& refPropInfo : refPropInfos)
+		for (const FRefExplorerEditorModule_PRIVATE::FRefPropInfo& refPropInfo : refPropInfos)
 		{
 			categorizedProps.Add(refPropInfo.Category, refPropInfo.Name);
 		}
 
 		if (!categorizedProps.IsEmpty())
 		{
+			TArray<FString> categories;
+			categorizedProps.GetKeys(categories);
+			categories.Sort();
 
+			TSharedRef<SVerticalBox> verticalBox = SNew(SVerticalBox);
+
+			for (const FString& category : categories)
+			{
+				verticalBox->AddSlot()[SNew(STextBlock).Text(FText::FromString(category + ":")).Font(FRefExplorerEditorModule_PRIVATE::SmallBold)];
+
+				TArray<FString> props;
+				categorizedProps.MultiFind(category, props);
+				props.Sort();
+
+				for (const FString& prop : props)
+				{
+					verticalBox->AddSlot()[SNew(STextBlock).Text(FText::FromString(" - " + prop)).Font(FRefExplorerEditorModule_PRIVATE::Small)];
+				}
+			}
+
+			refPropsWidget = verticalBox;
 		}
 	}
 
@@ -1130,7 +1151,7 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 																	ThumbnailWidget
 																]
 
-																+SVerticalBox::Slot().AutoHeight()
+																+SVerticalBox::Slot().AutoHeight().Padding(categorizedProps.IsEmpty() ? FMargin() : FMargin(0, 4, 0, 0))
 																[
 																	refPropsWidget
 																]
@@ -1198,20 +1219,6 @@ TSharedPtr<SGraphNode> FRefExplorerGraphNodeFactory::CreateNode(UEdGraphNode* In
 //--------------------------------------------------------------------
 // SRefExplorer
 //--------------------------------------------------------------------
-
-bool IsAssetIdentifierPassingSearchTextFilter(const FAssetIdentifier& InNode, const TArray<FString>& InSearchWords)
-{
-	FString NodeString = InNode.ToString();
-	for (const FString& Word : InSearchWords)
-	{
-		if (!NodeString.Contains(Word))
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
 
 SRefExplorer::~SRefExplorer()
 {
@@ -1333,8 +1340,6 @@ void SRefExplorer::Construct(const FArguments& InArgs)
 						]
 				]
 		];
-
-		SetCanTick(true);
 }
 
 FReply SRefExplorer::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
@@ -1347,7 +1352,6 @@ void SRefExplorer::SetGraphRootIdentifier(const FAssetIdentifier& NewGraphRootId
 	GraphObj->SetGraphRoot(NewGraphRootIdentifier);
 	RebuildGraph();
 
-	// Zoom once this frame to make sure widgets are visible, then zoom again so size is correct
 	TriggerZoomToFit(0, 0);
 	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 }
@@ -1400,6 +1404,7 @@ void SRefExplorer::OnNodeDoubleClicked(UEdGraphNode* Node)
 			GraphObj->SetGraphRoot(RefExplorerNode->GetIdentifier());
 			GraphObj->RebuildGraph();
 
+			TriggerZoomToFit(0, 0);
 			RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 		}
 	}
@@ -1798,6 +1803,9 @@ void SRefExplorer::OnInitialAssetRegistrySearchComplete()
 	if (GraphObj)
 	{
 		GraphObj->RebuildGraph();
+
+		TriggerZoomToFit(0, 0);
+		RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 	}
 }
 
@@ -1924,7 +1932,6 @@ TSharedRef<SWidget> SRefExplorer::MakeToolBar()
 
 	//////ToolBarBuilder.EndSection();
 
-
 	return ToolBarBuilder.MakeWidget();
 }
 
@@ -1940,7 +1947,6 @@ TSharedRef<SWidget> SRefExplorer::GenerateFindPathAssetPickerMenu()
 	AssetPickerConfig.bAllowDragging = false;
 
 	FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));
-
 
 	return SNew(SBox)
 		.HeightOverride(500)
@@ -1960,6 +1966,7 @@ void SRefExplorer::OnFindPathAssetSelected(const FAssetData& AssetData)
 	GraphObj->SetGraphRoot(FAssetIdentifier(AssetData.PackageName));
 	GraphObj->RebuildGraph();
 
+	TriggerZoomToFit(0, 0);
 	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
 }
 
@@ -1971,9 +1978,10 @@ void SRefExplorer::OnFindPathAssetEnterPressed(const TArray<FAssetData>& AssetDa
 	{
 		GraphObj->SetGraphRoot(FAssetIdentifier(AssetData[0].PackageName));
 		GraphObj->RebuildGraph();
-	}
 
-	RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
+		TriggerZoomToFit(0, 0);
+		RegisterActiveTimer(0.1f, FWidgetActiveTimerDelegate::CreateSP(this, &SRefExplorer::TriggerZoomToFit));
+	}
 }
 
 namespace FRefExplorerEditorModule_PRIVATE
