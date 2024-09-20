@@ -176,7 +176,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 				}
 			}
 
-			FindRecursive(structProperty->Struct, structProperty, rootAsset, refPropInfos);
+			FindRecursive(structProperty->Struct, structValue, rootAsset, refPropInfos);
 		}
 	}
 }
