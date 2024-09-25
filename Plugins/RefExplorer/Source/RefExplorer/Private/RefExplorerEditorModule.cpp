@@ -147,37 +147,381 @@ namespace FRefExplorerEditorModule_PRIVATE
 		FRefPropInfo(const FString& name, const FString& category = "") : Name(name), Category(category) {}
 	};
 
-	void FindRecursive(UStruct* generatedClass, void* containerOwner, UObject* rootAsset, TArray<FRefPropInfo>& refPropInfos)
+	bool IsChildOf(const TObjectPtr<UClass> propertyClass, UObject* rootAsset)
 	{
-		for (TFieldIterator<FStructProperty> It(generatedClass); It; ++It)
+		if (UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset))
 		{
-			FStructProperty* structProperty = *It;
+			return propertyClass->IsChildOf(rootBlueprint->GeneratedClass);
+		}
+		else if (UScriptStruct* rootStruct = Cast<UScriptStruct>(rootAsset))
+		{
+			return propertyClass->IsChildOf(rootStruct);
+		}
 
-			void* structValue = structProperty->ContainerPtrToValuePtr<void>(containerOwner);
+		return false;
+	}
 
-			for (TFieldIterator<FObjectPropertyBase> internalIt(structProperty->Struct); internalIt; ++internalIt)
+	bool IsChildOf(const FProperty* property, UObject* rootAsset)
+	{
+		if (const FObjectPropertyBase* objectProperty = CastField<FObjectPropertyBase>(property))
+		{
+			if (const FClassProperty* classProperty = CastField<FClassProperty>(property))
 			{
-				if (FObjectPropertyBase* objectProperty = *internalIt)
-				{
-					UObject* objectPropertyValue = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(structValue));
+				return IsChildOf(classProperty->MetaClass, rootAsset);
+			}
+			else if (const FSoftClassProperty* softClassProperty = CastField<FSoftClassProperty>(property))
+			{
+				return IsChildOf(softClassProperty->MetaClass, rootAsset);
+			}
+			else
+			{
+				return IsChildOf(objectProperty->PropertyClass, rootAsset);
+			}
+		}
 
-					if (objectPropertyValue == rootAsset)
+		if (const FStructProperty* structProperty = CastField<FStructProperty>(property))
+		{
+			if (UScriptStruct* rootStruct = Cast<UScriptStruct>(rootAsset))
+			{
+				return structProperty->Struct->IsChildOf(rootStruct);
+			}
+		}
+
+		return false;
+	}
+
+	bool FindRecursive(UStruct* uClass, void* containerOwner, UObject* rootAsset, TArray<FRefPropInfo>& refPropInfos, bool isInternal)
+	{
+		if (rootAsset)
+		{
+			for (TFieldIterator<FStructProperty> It(uClass); It; ++It)
+			{
+				FStructProperty* structProperty = *It;
+
+				if (IsChildOf(structProperty, rootAsset))
+				{
+					if (isInternal)
 					{
-						refPropInfos.Add(FRefPropInfo(structProperty->GetDisplayNameText().ToString(), GetCategory(structProperty)));
+						return true;
 					}
 
-					if (UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset))
+					refPropInfos.Add(FRefPropInfo(structProperty->GetDisplayNameText().ToString(), GetCategory(structProperty)));
+				}
+				else
+				{
+					void* structPropertyValue = structProperty->ContainerPtrToValuePtr<void>(containerOwner);
+
+					if (FindRecursive(structProperty->Struct, structPropertyValue, rootAsset, refPropInfos, true))
 					{
-						if (objectPropertyValue == rootBlueprint->GeneratedClass)
+						if (isInternal)
 						{
-							refPropInfos.Add(FRefPropInfo(structProperty->GetDisplayNameText().ToString(), GetCategory(structProperty)));
+							return true;
+						}
+
+						refPropInfos.Add(FRefPropInfo(structProperty->GetDisplayNameText().ToString(), GetCategory(structProperty)));
+					}
+				}
+			}
+
+			for (TFieldIterator<FArrayProperty> It(uClass); It; ++It)
+			{
+				if (FArrayProperty* arrayProperty = *It)
+				{
+					void* arrayPropertyValue = arrayProperty->ContainerPtrToValuePtr<void>(containerOwner);
+
+					if (FObjectPropertyBase* arrayEntryProperty = CastField<FObjectPropertyBase>(arrayProperty->Inner))
+					{
+						if (IsChildOf(arrayEntryProperty, rootAsset))
+						{
+							if (isInternal)
+							{
+								return true;
+							}
+
+							refPropInfos.Add(FRefPropInfo(arrayProperty->GetDisplayNameText().ToString(), GetCategory(arrayProperty)));
+						}
+						else
+						{
+							UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
+
+							FScriptArrayHelper ArrayHelper(arrayProperty, arrayPropertyValue);
+
+							for (int32 i = 0; i < ArrayHelper.Num(); ++i)
+							{
+								const uint8* arrayEntryPropertyValue = ArrayHelper.GetRawPtr(i);
+
+								UObject* arrayEntryObjectValue = arrayEntryProperty->GetObjectPropertyValue(arrayEntryPropertyValue);
+
+								if (arrayEntryObjectValue == rootAsset || rootBlueprint && arrayEntryObjectValue == rootBlueprint->GeneratedClass)
+								{
+									if (isInternal)
+									{
+										return true;
+									}
+
+									refPropInfos.Add(FRefPropInfo(arrayProperty->GetDisplayNameText().ToString(), GetCategory(arrayProperty)));
+									break;
+								}
+							}
+						}
+					}
+
+					if (FStructProperty* arrayEntryProperty = CastField<FStructProperty>(arrayProperty->Inner))
+					{
+						if (IsChildOf(arrayEntryProperty, rootAsset))
+						{
+							if (isInternal)
+							{
+								return true;
+							}
+
+							refPropInfos.Add(FRefPropInfo(arrayProperty->GetDisplayNameText().ToString(), GetCategory(arrayProperty)));
+						}
+						else
+						{
+							FScriptArrayHelper ArrayHelper(arrayProperty, arrayPropertyValue);
+
+							for (int32 i = 0; i < ArrayHelper.Num(); ++i)
+							{
+								uint8* arrayEntryPropertyValue = ArrayHelper.GetRawPtr(i);
+
+								if (FindRecursive(arrayEntryProperty->Struct, arrayEntryPropertyValue, rootAsset, refPropInfos, true))
+								{
+									if (isInternal)
+									{
+										return true;
+									}
+
+									refPropInfos.Add(FRefPropInfo(arrayProperty->GetDisplayNameText().ToString(), GetCategory(arrayProperty)));
+									break;
+								}
+							}
 						}
 					}
 				}
 			}
 
-			FindRecursive(structProperty->Struct, structValue, rootAsset, refPropInfos);
+			for (TFieldIterator<FSetProperty> It(uClass); It; ++It)
+			{
+				if (FSetProperty* setProperty = *It)
+				{
+					void* setPropertyValue = setProperty->ContainerPtrToValuePtr<void>(containerOwner);
+
+					if (FObjectPropertyBase* setEntryProperty = CastField<FObjectPropertyBase>(setProperty->ElementProp))
+					{
+						if (IsChildOf(setEntryProperty, rootAsset))
+						{
+							if (isInternal)
+							{
+								return true;
+							}
+
+							refPropInfos.Add(FRefPropInfo(setProperty->GetDisplayNameText().ToString(), GetCategory(setProperty)));
+						}
+						else
+						{
+							UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
+
+							FScriptSetHelper SetHelper(setProperty, setPropertyValue);
+
+							for (FScriptSetHelper::FIterator setIt(SetHelper); setIt; ++setIt)
+							{
+								const uint8* setEntryPropertyValue = SetHelper.GetElementPtr(*setIt);
+
+								UObject* arrayEntryObjectValue = setEntryProperty->GetObjectPropertyValue(setEntryPropertyValue);
+
+								if (arrayEntryObjectValue == rootAsset || rootBlueprint && arrayEntryObjectValue == rootBlueprint->GeneratedClass)
+								{
+									if (isInternal)
+									{
+										return true;
+									}
+
+									refPropInfos.Add(FRefPropInfo(setProperty->GetDisplayNameText().ToString(), GetCategory(setProperty)));
+									break;
+								}
+							}
+						}
+					}
+
+					if (FStructProperty* setEntryProperty = CastField<FStructProperty>(setProperty->ElementProp))
+					{
+						if (IsChildOf(setEntryProperty, rootAsset))
+						{
+							if (isInternal)
+							{
+								return true;
+							}
+
+							refPropInfos.Add(FRefPropInfo(setProperty->GetDisplayNameText().ToString(), GetCategory(setProperty)));
+						}
+						else
+						{
+							FScriptSetHelper SetHelper(setProperty, setPropertyValue);
+
+							for (FScriptSetHelper::FIterator setIt(SetHelper); setIt; ++setIt)
+							{
+								uint8* setEntryPropertyValue = SetHelper.GetElementPtr(*setIt);
+
+								if (FindRecursive(setEntryProperty->Struct, setEntryPropertyValue, rootAsset, refPropInfos, true))
+								{
+									if (isInternal)
+									{
+										return true;
+									}
+
+									refPropInfos.Add(FRefPropInfo(setProperty->GetDisplayNameText().ToString(), GetCategory(setProperty)));
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			for (TFieldIterator<FMapProperty> It(uClass); It; ++It)
+			{
+				if (FMapProperty* mapProperty = *It)
+				{
+					void* mapPropertyValue = mapProperty->ContainerPtrToValuePtr<void>(containerOwner);
+
+					const FProperty* keyProperty = mapProperty->GetKeyProperty();
+					const FStructProperty* keyStructProperty = CastField<FStructProperty>(keyProperty);
+					const FObjectPropertyBase* keyObjectProperty = CastField<FObjectPropertyBase>(keyProperty);
+
+					const FProperty* valueProperty = mapProperty->GetValueProperty();
+					const FStructProperty* valueStructProperty = CastField<FStructProperty>(valueProperty);
+					const FObjectPropertyBase* valueObjectProperty = CastField<FObjectPropertyBase>(valueProperty);
+
+					if (IsChildOf(keyProperty, rootAsset))
+					{
+						if (isInternal)
+						{
+							return true;
+						}
+
+						refPropInfos.Add(FRefPropInfo(mapProperty->GetDisplayNameText().ToString(), GetCategory(mapProperty)));
+					}
+					else if (IsChildOf(valueProperty, rootAsset))
+					{
+						if (isInternal)
+						{
+							return true;
+						}
+
+						refPropInfos.Add(FRefPropInfo(mapProperty->GetDisplayNameText().ToString(), GetCategory(mapProperty)));
+					}
+					else
+					{
+						UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
+
+						FScriptMapHelper MapHelper(mapProperty, mapPropertyValue);
+
+						for (FScriptMapHelper::FIterator mapIt(MapHelper); mapIt; ++mapIt)
+						{
+							if (keyStructProperty)
+							{
+								uint8* mapEntryPropertyValue = MapHelper.GetKeyPtr(*mapIt);
+
+								if (FindRecursive(keyStructProperty->Struct, mapEntryPropertyValue, rootAsset, refPropInfos, true))
+								{
+									if (isInternal)
+									{
+										return true;
+									}
+
+									refPropInfos.Add(FRefPropInfo(mapProperty->GetDisplayNameText().ToString(), GetCategory(mapProperty)));
+									break;
+								}
+							}
+							else if (keyObjectProperty)
+							{
+								uint8* mapEntryPropertyValue = MapHelper.GetKeyPtr(*mapIt);
+
+								UObject* arrayEntryObjectValue = keyObjectProperty->GetObjectPropertyValue(mapEntryPropertyValue);
+
+								if (arrayEntryObjectValue == rootAsset || rootBlueprint && arrayEntryObjectValue == rootBlueprint->GeneratedClass)
+								{
+									if (isInternal)
+									{
+										return true;
+									}
+
+									refPropInfos.Add(FRefPropInfo(mapProperty->GetDisplayNameText().ToString(), GetCategory(mapProperty)));
+									break;
+								}
+							}
+
+							if (valueStructProperty)
+							{
+								uint8* mapEntryPropertyValue = MapHelper.GetValuePtr(*mapIt);
+
+								if (FindRecursive(valueStructProperty->Struct, mapEntryPropertyValue, rootAsset, refPropInfos, true))
+								{
+									if (isInternal)
+									{
+										return true;
+									}
+
+									refPropInfos.Add(FRefPropInfo(mapProperty->GetDisplayNameText().ToString(), GetCategory(mapProperty)));
+									break;
+								}
+							}
+							else if (valueObjectProperty)
+							{
+								uint8* mapEntryPropertyValue = MapHelper.GetValuePtr(*mapIt);
+
+								UObject* arrayEntryObjectValue = valueObjectProperty->GetObjectPropertyValue(mapEntryPropertyValue);
+
+								if (arrayEntryObjectValue == rootAsset || rootBlueprint && arrayEntryObjectValue == rootBlueprint->GeneratedClass)
+								{
+									if (isInternal)
+									{
+										return true;
+									}
+
+									refPropInfos.Add(FRefPropInfo(mapProperty->GetDisplayNameText().ToString(), GetCategory(mapProperty)));
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			for (TFieldIterator<FObjectPropertyBase> It(uClass); It; ++It)
+			{
+				FObjectPropertyBase* objectProperty = *It;
+
+				if (IsChildOf(objectProperty, rootAsset))
+				{
+					if (isInternal)
+					{
+						return true;
+					}
+
+					refPropInfos.Add(FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), GetCategory(objectProperty)));
+				}
+				else
+				{
+					UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
+
+					UObject* objectPropertyValue = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(containerOwner));
+
+					if (objectPropertyValue == rootAsset || rootBlueprint && objectPropertyValue == rootBlueprint->GeneratedClass)
+					{
+						if (isInternal)
+						{
+							return true;
+						}
+
+						refPropInfos.Add(FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), GetCategory(objectProperty)));
+					}
+				}
+			}
 		}
+
+		return false;
 	}
 }
 //--------------------------------------------------------------------
@@ -885,43 +1229,7 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 					{
 						UObject* genClassDefaultObject = refBlueprint->GeneratedClass->GetDefaultObject();
 
-						for (TFieldIterator<FObjectPropertyBase> It(refBlueprint->GeneratedClass); It; ++It)
-						{
-							if (FObjectPropertyBase* objectProperty = *It)
-							{
-								UObject* objectPropertyValue = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(genClassDefaultObject));
-
-								if (objectPropertyValue == rootAsset)
-								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
-								}
-
-								if (UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset))
-								{
-									if (objectPropertyValue == rootBlueprint->GeneratedClass)
-									{
-										refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
-									}
-								}
-							}
-						}
-
-						if (UScriptStruct* scriptStruct = Cast<UScriptStruct>(rootAsset))
-						{
-							for (TFieldIterator<FStructProperty> It(refBlueprint->GeneratedClass); It; ++It)
-							{
-								FStructProperty* structProperty = *It;
-
-								if (structProperty->Struct == scriptStruct)
-								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(structProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(structProperty)));
-								}
-							}
-						}
-						else
-						{
-							FRefExplorerEditorModule_PRIVATE::FindRecursive(refBlueprint->GeneratedClass, genClassDefaultObject, rootAsset, refPropInfos);
-						}
+						FRefExplorerEditorModule_PRIVATE::FindRecursive(refBlueprint->GeneratedClass, genClassDefaultObject, rootAsset, refPropInfos, false);
 					}
 					else if (UScriptStruct* refStruct = Cast<UScriptStruct>(refAsset))
 					{
@@ -929,69 +1237,13 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 						uint8* structDefault = new uint8[structureSize];
 						refStruct->InitializeDefaultValue(structDefault);
 
-						for (TFieldIterator<FObjectPropertyBase> It(refStruct); It; ++It)
-						{
-							if (FObjectPropertyBase* objectProperty = *It)
-							{
-								UObject* value = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(structDefault));
-
-								if (value == rootAsset)
-								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
-								}
-							}
-						}
-
-						if (UScriptStruct* scriptStruct = Cast<UScriptStruct>(rootAsset))
-						{
-							for (TFieldIterator<FStructProperty> It(refStruct); It; ++It)
-							{
-								FStructProperty* structProperty = *It;
-
-								if (structProperty->Struct == scriptStruct)
-								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(structProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(structProperty)));
-								}
-							}
-						}
-						else
-						{
-							FRefExplorerEditorModule_PRIVATE::FindRecursive(refStruct, structDefault, rootAsset, refPropInfos);
-						}
+						FRefExplorerEditorModule_PRIVATE::FindRecursive(refStruct, structDefault, rootAsset, refPropInfos, false);
 
 						delete[] structDefault;
 					}
 					else if (UClass* refAssetClass = refAsset->GetClass())
 					{
-						for (TFieldIterator<FObjectPropertyBase> It(refAssetClass); It; ++It)
-						{
-							if (FObjectPropertyBase* objectProperty = *It)
-							{
-								UObject* value = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(refAsset));
-
-								if (value == rootAsset)
-								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(objectProperty)));
-								}
-							}
-						}
-
-						if (UScriptStruct* scriptStruct = Cast<UScriptStruct>(rootAsset))
-						{
-							for (TFieldIterator<FStructProperty> It(refAssetClass); It; ++It)
-							{
-								FStructProperty* structProperty = *It;
-
-								if (structProperty->Struct == scriptStruct)
-								{
-									refPropInfos.Add(FRefExplorerEditorModule_PRIVATE::FRefPropInfo(structProperty->GetDisplayNameText().ToString(), FRefExplorerEditorModule_PRIVATE::GetCategory(structProperty)));
-								}
-							}
-						}
-						else
-						{
-							FRefExplorerEditorModule_PRIVATE::FindRecursive(refAssetClass, refAsset, rootAsset, refPropInfos);
-						}
+						FRefExplorerEditorModule_PRIVATE::FindRecursive(refAssetClass, refAsset, rootAsset, refPropInfos, false);
 					}
 				}
 			}
