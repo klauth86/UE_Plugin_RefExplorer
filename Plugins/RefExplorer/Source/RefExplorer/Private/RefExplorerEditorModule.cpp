@@ -67,7 +67,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 		const FLinearColor ColorSoftEditorOnly = FLinearColor(FColor(73, 33, 58));
 	}
 
-	EDependencyPinCategory ParseDependencyPinCategory(FName PinCategory)
+	EDependencyPinCategory ParseDependencyPinCategory(const FName PinCategory)
 	{
 		if (PinCategory == DependencyPinCategory::NameHardUsedInGame)
 		{
@@ -91,7 +91,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 		}
 	}
 
-	FName GetName(EDependencyPinCategory Category)
+	FName GetName(const EDependencyPinCategory Category)
 	{
 		if ((Category & EDependencyPinCategory::LinkEndMask) == EDependencyPinCategory::LinkEndPassive)
 		{
@@ -113,7 +113,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 		}
 	}
 
-	FLinearColor GetColor(EDependencyPinCategory Category)
+	FLinearColor GetColor(const EDependencyPinCategory Category)
 	{
 		if ((Category & EDependencyPinCategory::LinkEndMask) == EDependencyPinCategory::LinkEndPassive)
 		{
@@ -137,7 +137,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 	const FString CATEGORY_DEFAULT = "Default";
 
-	FString GetCategory(FField* field) { return field && field->HasMetaData("Category") ? field->GetMetaData("Category") : CATEGORY_DEFAULT; }
+	FString GetCategory(const FField* field) { return field && field->HasMetaData("Category") ? field->GetMetaData("Category") : CATEGORY_DEFAULT; }
 
 	struct FRefPropInfo
 	{
@@ -147,13 +147,13 @@ namespace FRefExplorerEditorModule_PRIVATE
 		FRefPropInfo(const FString& name, const FString& category = "") : Name(name), Category(category) {}
 	};
 
-	bool IsChildOf(const TObjectPtr<UClass> propertyClass, UObject* rootAsset)
+	bool IsChildOf(const TObjectPtr<UClass>& propertyClass, const UObject* rootAsset)
 	{
-		if (UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset))
+		if (const UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset))
 		{
 			return propertyClass->IsChildOf(rootBlueprint->GeneratedClass);
 		}
-		else if (UScriptStruct* rootStruct = Cast<UScriptStruct>(rootAsset))
+		else if (const UScriptStruct* rootStruct = Cast<UScriptStruct>(rootAsset))
 		{
 			return propertyClass->IsChildOf(rootStruct);
 		}
@@ -161,7 +161,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 		return false;
 	}
 
-	bool IsChildOf(const FProperty* property, UObject* rootAsset)
+	bool IsChildOf(const FProperty* property, const UObject* rootAsset)
 	{
 		if (const FObjectPropertyBase* objectProperty = CastField<FObjectPropertyBase>(property))
 		{
@@ -181,7 +181,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 		if (const FStructProperty* structProperty = CastField<FStructProperty>(property))
 		{
-			if (UScriptStruct* rootStruct = Cast<UScriptStruct>(rootAsset))
+			if (const UScriptStruct* rootStruct = Cast<UScriptStruct>(rootAsset))
 			{
 				return structProperty->Struct->IsChildOf(rootStruct);
 			}
@@ -190,28 +190,15 @@ namespace FRefExplorerEditorModule_PRIVATE
 		return false;
 	}
 
-	bool FindRecursive(UStruct* uClass, void* containerOwner, UObject* rootAsset, TArray<FRefPropInfo>& refPropInfos, bool isInternal)
+	bool FindRecursive(const UStruct* uClass, const void* containerOwner, const UObject* rootAsset, TArray<FRefPropInfo>& refPropInfos, const bool isInternal)
 	{
 		if (rootAsset)
 		{
 			for (TFieldIterator<FStructProperty> It(uClass); It; ++It)
 			{
-				FStructProperty* structProperty = *It;
-
-				if (IsChildOf(structProperty, rootAsset))
+				if (const FStructProperty* structProperty = *It)
 				{
-					if (isInternal)
-					{
-						return true;
-					}
-
-					refPropInfos.Add(FRefPropInfo(structProperty->GetDisplayNameText().ToString(), GetCategory(structProperty)));
-				}
-				else
-				{
-					void* structPropertyValue = structProperty->ContainerPtrToValuePtr<void>(containerOwner);
-
-					if (FindRecursive(structProperty->Struct, structPropertyValue, rootAsset, refPropInfos, true))
+					if (IsChildOf(structProperty, rootAsset))
 					{
 						if (isInternal)
 						{
@@ -220,16 +207,30 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 						refPropInfos.Add(FRefPropInfo(structProperty->GetDisplayNameText().ToString(), GetCategory(structProperty)));
 					}
+					else
+					{
+						const void* structPropertyValue = structProperty->ContainerPtrToValuePtr<void>(containerOwner);
+
+						if (FindRecursive(structProperty->Struct, structPropertyValue, rootAsset, refPropInfos, true))
+						{
+							if (isInternal)
+							{
+								return true;
+							}
+
+							refPropInfos.Add(FRefPropInfo(structProperty->GetDisplayNameText().ToString(), GetCategory(structProperty)));
+						}
+					}
 				}
 			}
 
 			for (TFieldIterator<FArrayProperty> It(uClass); It; ++It)
 			{
-				if (FArrayProperty* arrayProperty = *It)
+				if (const FArrayProperty* arrayProperty = *It)
 				{
-					void* arrayPropertyValue = arrayProperty->ContainerPtrToValuePtr<void>(containerOwner);
+					const void* arrayPropertyValue = arrayProperty->ContainerPtrToValuePtr<void>(containerOwner);
 
-					if (FObjectPropertyBase* arrayEntryProperty = CastField<FObjectPropertyBase>(arrayProperty->Inner))
+					if (const FObjectPropertyBase* arrayEntryProperty = CastField<FObjectPropertyBase>(arrayProperty->Inner))
 					{
 						if (IsChildOf(arrayEntryProperty, rootAsset))
 						{
@@ -242,7 +243,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 						}
 						else
 						{
-							UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
+							const UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
 
 							FScriptArrayHelper ArrayHelper(arrayProperty, arrayPropertyValue);
 
@@ -250,7 +251,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 							{
 								const uint8* arrayEntryPropertyValue = ArrayHelper.GetRawPtr(i);
 
-								UObject* arrayEntryObjectValue = arrayEntryProperty->GetObjectPropertyValue(arrayEntryPropertyValue);
+								const UObject* arrayEntryObjectValue = arrayEntryProperty->GetObjectPropertyValue(arrayEntryPropertyValue);
 
 								if (arrayEntryObjectValue == rootAsset || rootBlueprint && arrayEntryObjectValue == rootBlueprint->GeneratedClass)
 								{
@@ -266,7 +267,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 						}
 					}
 
-					if (FStructProperty* arrayEntryProperty = CastField<FStructProperty>(arrayProperty->Inner))
+					if (const FStructProperty* arrayEntryProperty = CastField<FStructProperty>(arrayProperty->Inner))
 					{
 						if (IsChildOf(arrayEntryProperty, rootAsset))
 						{
@@ -283,7 +284,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 							for (int32 i = 0; i < ArrayHelper.Num(); ++i)
 							{
-								uint8* arrayEntryPropertyValue = ArrayHelper.GetRawPtr(i);
+								const uint8* arrayEntryPropertyValue = ArrayHelper.GetRawPtr(i);
 
 								if (FindRecursive(arrayEntryProperty->Struct, arrayEntryPropertyValue, rootAsset, refPropInfos, true))
 								{
@@ -303,11 +304,11 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 			for (TFieldIterator<FSetProperty> It(uClass); It; ++It)
 			{
-				if (FSetProperty* setProperty = *It)
+				if (const FSetProperty* setProperty = *It)
 				{
-					void* setPropertyValue = setProperty->ContainerPtrToValuePtr<void>(containerOwner);
+					const void* setPropertyValue = setProperty->ContainerPtrToValuePtr<void>(containerOwner);
 
-					if (FObjectPropertyBase* setEntryProperty = CastField<FObjectPropertyBase>(setProperty->ElementProp))
+					if (const FObjectPropertyBase* setEntryProperty = CastField<FObjectPropertyBase>(setProperty->ElementProp))
 					{
 						if (IsChildOf(setEntryProperty, rootAsset))
 						{
@@ -320,7 +321,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 						}
 						else
 						{
-							UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
+							const UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
 
 							FScriptSetHelper SetHelper(setProperty, setPropertyValue);
 
@@ -328,7 +329,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 							{
 								const uint8* setEntryPropertyValue = SetHelper.GetElementPtr(setIt);
 
-								UObject* arrayEntryObjectValue = setEntryProperty->GetObjectPropertyValue(setEntryPropertyValue);
+								const UObject* arrayEntryObjectValue = setEntryProperty->GetObjectPropertyValue(setEntryPropertyValue);
 
 								if (arrayEntryObjectValue == rootAsset || rootBlueprint && arrayEntryObjectValue == rootBlueprint->GeneratedClass)
 								{
@@ -344,7 +345,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 						}
 					}
 
-					if (FStructProperty* setEntryProperty = CastField<FStructProperty>(setProperty->ElementProp))
+					if (const FStructProperty* setEntryProperty = CastField<FStructProperty>(setProperty->ElementProp))
 					{
 						if (IsChildOf(setEntryProperty, rootAsset))
 						{
@@ -361,7 +362,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 							for (FScriptSetHelper::FIterator setIt(SetHelper); setIt; ++setIt)
 							{
-								uint8* setEntryPropertyValue = SetHelper.GetElementPtr(setIt);
+								const uint8* setEntryPropertyValue = SetHelper.GetElementPtr(setIt);
 
 								if (FindRecursive(setEntryProperty->Struct, setEntryPropertyValue, rootAsset, refPropInfos, true))
 								{
@@ -381,9 +382,9 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 			for (TFieldIterator<FMapProperty> It(uClass); It; ++It)
 			{
-				if (FMapProperty* mapProperty = *It)
+				if (const FMapProperty* mapProperty = *It)
 				{
-					void* mapPropertyValue = mapProperty->ContainerPtrToValuePtr<void>(containerOwner);
+					const void* mapPropertyValue = mapProperty->ContainerPtrToValuePtr<void>(containerOwner);
 
 					const FProperty* keyProperty = mapProperty->GetKeyProperty();
 					const FStructProperty* keyStructProperty = CastField<FStructProperty>(keyProperty);
@@ -413,7 +414,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 					}
 					else
 					{
-						UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
+						const UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
 
 						FScriptMapHelper MapHelper(mapProperty, mapPropertyValue);
 
@@ -421,7 +422,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 						{
 							if (keyStructProperty)
 							{
-								uint8* mapEntryPropertyValue = MapHelper.GetKeyPtr(mapIt);
+								const uint8* mapEntryPropertyValue = MapHelper.GetKeyPtr(mapIt);
 
 								if (FindRecursive(keyStructProperty->Struct, mapEntryPropertyValue, rootAsset, refPropInfos, true))
 								{
@@ -436,9 +437,9 @@ namespace FRefExplorerEditorModule_PRIVATE
 							}
 							else if (keyObjectProperty)
 							{
-								uint8* mapEntryPropertyValue = MapHelper.GetKeyPtr(mapIt);
+								const uint8* mapEntryPropertyValue = MapHelper.GetKeyPtr(mapIt);
 
-								UObject* arrayEntryObjectValue = keyObjectProperty->GetObjectPropertyValue(mapEntryPropertyValue);
+								const UObject* arrayEntryObjectValue = keyObjectProperty->GetObjectPropertyValue(mapEntryPropertyValue);
 
 								if (arrayEntryObjectValue == rootAsset || rootBlueprint && arrayEntryObjectValue == rootBlueprint->GeneratedClass)
 								{
@@ -454,7 +455,7 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 							if (valueStructProperty)
 							{
-								uint8* mapEntryPropertyValue = MapHelper.GetValuePtr(mapIt);
+								const uint8* mapEntryPropertyValue = MapHelper.GetValuePtr(mapIt);
 
 								if (FindRecursive(valueStructProperty->Struct, mapEntryPropertyValue, rootAsset, refPropInfos, true))
 								{
@@ -469,9 +470,9 @@ namespace FRefExplorerEditorModule_PRIVATE
 							}
 							else if (valueObjectProperty)
 							{
-								uint8* mapEntryPropertyValue = MapHelper.GetValuePtr(mapIt);
+								const uint8* mapEntryPropertyValue = MapHelper.GetValuePtr(mapIt);
 
-								UObject* arrayEntryObjectValue = valueObjectProperty->GetObjectPropertyValue(mapEntryPropertyValue);
+								const UObject* arrayEntryObjectValue = valueObjectProperty->GetObjectPropertyValue(mapEntryPropertyValue);
 
 								if (arrayEntryObjectValue == rootAsset || rootBlueprint && arrayEntryObjectValue == rootBlueprint->GeneratedClass)
 								{
@@ -491,24 +492,9 @@ namespace FRefExplorerEditorModule_PRIVATE
 
 			for (TFieldIterator<FObjectPropertyBase> It(uClass); It; ++It)
 			{
-				FObjectPropertyBase* objectProperty = *It;
-
-				if (IsChildOf(objectProperty, rootAsset))
+				if (const FObjectPropertyBase* objectProperty = *It)
 				{
-					if (isInternal)
-					{
-						return true;
-					}
-
-					refPropInfos.Add(FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), GetCategory(objectProperty)));
-				}
-				else
-				{
-					UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
-
-					UObject* objectPropertyValue = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(containerOwner));
-
-					if (objectPropertyValue == rootAsset || rootBlueprint && objectPropertyValue == rootBlueprint->GeneratedClass)
+					if (IsChildOf(objectProperty, rootAsset))
 					{
 						if (isInternal)
 						{
@@ -516,6 +502,22 @@ namespace FRefExplorerEditorModule_PRIVATE
 						}
 
 						refPropInfos.Add(FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), GetCategory(objectProperty)));
+					}
+					else
+					{
+						const UBlueprint* rootBlueprint = Cast<UBlueprint>(rootAsset);
+
+						const UObject* objectPropertyValue = objectProperty->GetObjectPropertyValue(objectProperty->ContainerPtrToValuePtr<void>(containerOwner));
+
+						if (objectPropertyValue == rootAsset || rootBlueprint && objectPropertyValue == rootBlueprint->GeneratedClass)
+						{
+							if (isInternal)
+							{
+								return true;
+							}
+
+							refPropInfos.Add(FRefPropInfo(objectProperty->GetDisplayNameText().ToString(), GetCategory(objectProperty)));
+						}
 					}
 				}
 			}
