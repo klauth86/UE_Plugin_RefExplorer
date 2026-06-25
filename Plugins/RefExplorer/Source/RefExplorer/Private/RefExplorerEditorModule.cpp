@@ -585,10 +585,10 @@ public:
 		: FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements)
 	{}
 
-	virtual FVector2D ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const override
+	virtual FVector2f ComputeSplineTangent(const FVector2f& Start, const FVector2f& End) const override
 	{
 		const int32 Tension = FMath::Abs<int32>(Start.X - End.X);
-		return Tension * FVector2D(1.0f, 0);
+		return Tension * FVector2f(1.0f, 0);
 	}
 
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, /*inout*/ FConnectionParams& Params) override
@@ -1289,7 +1289,6 @@ void SGraphNode_RefExplorer::UpdateGraphNode()
 		}
 	}
 
-	ContentScale.Bind(this, &SGraphNode_RefExplorer::GetContentScale);
 	GetOrAddSlot(ENodeZone::Center)
 		.HAlign(HAlign_Center)
 		.VAlign(VAlign_Center)
@@ -2397,7 +2396,7 @@ void FRefExplorerEditorModule::StartupStyle()
 	StyleSet->Set(GetContextMenuRefExplorerIconName(), new FSlateImageBrush(StyleSet->RootToContentDir(TEXT("Icon_ContextMenu_RefExplorer_128"), TEXT(".png")), Icon20x20));
 
 	const int BodyRadius = 10.0; // Designed for 4 but using 10 to accomodate the shared selection border.  Update to 4 all nodes get aligned.
-	const FLinearColor SpillColor(.3, .3, .3, 1.0);
+	const FLinearColor SpillColor(.3f, .3f, .3f, 1.0f);
 
 	StyleSet->Set("Graph.Node.BodyBackground", new FSlateRoundedBoxBrush(FStyleColors::Panel, BodyRadius));
 	StyleSet->Set("Graph.Node.ColorSpill", new FSlateRoundedBoxBrush(SpillColor, FVector4(BodyRadius, BodyRadius, 0.0, 0.0)));
